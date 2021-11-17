@@ -69,9 +69,9 @@ func PricesTodayHandler(rw http.ResponseWriter, r *http.Request) {
 	}
 	switch lang {
 	case "da":
-		response.Message = fmt.Sprintf("Blyfri oktan 95 koster i dag, %v, %v kroner og %v ører", GetDateString(response.Date, lang), response.Price.Kroner, response.Price.Orer)
+		response.Message = fmt.Sprintf("Dagens dato er %v. Blyfri oktan 95 koster %v kroner og %v ører", GetDateString(response.Date, lang), response.Price.Kroner, response.Price.Orer)
 	case "en":
-		response.Message = fmt.Sprintf("Unleaded 95 costs %v kroner today (%v)", response.Price.FullPrice, GetDateString(response.Date, lang))
+		response.Message = fmt.Sprintf("Today is %v. The price of Unleaded octane 95 is %v kroner", GetDateString(response.Date, lang), response.Price.FullPrice)
 	}
 
 	payload, err := json.Marshal(response)
