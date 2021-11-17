@@ -1,0 +1,13 @@
+version: "3.7"
+services:
+  benzinpriser:
+    image: registry.bjarke.xyz/benzinpriser
+    build:
+      context: ./
+    networks:
+      - swarm-overlay
+
+networks:
+  swarm-overlay:
+    external: true
+    name: swarm-overlay
