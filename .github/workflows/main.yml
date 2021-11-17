@@ -1,0 +1,25 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: CD Pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to prod
+        uses: appleboy/ssh-action@v0.0.7
+        with:
+          username: ${{ secrets.SSH_DEPLOYMENT_USERNAME }}
+          host: ${{ secrets.SSH_DEPLOYMENT_HOST }}
+          key: ${{ secrets.SSH_DEPLOYMENT_KEY }}
+          script: cd ${{ secrets.SSH_DEPLOYMENT_PROJECT_DIR }} && git reset --hard && git pull origin main && ${{ secrets.SSH_DEPLOYMENT_PROJECT_DIR }}/deployment.sh
+
+      - name: Notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        uses: Ilshidur/action-discord@master
+        with:
+          args: "The project {{ EVENT_PAYLOAD.repository.full_name }} has been deployed."
