@@ -26,6 +26,7 @@ func main() {
 }
 
 func PricesTodayHandler(rw http.ResponseWriter, r *http.Request) {
+	log.Printf("GET /prices/today\n")
 	now := time.Now()
 	price, err := priser.GetPrice(now)
 	if err != nil {
@@ -68,9 +69,9 @@ func PricesTodayHandler(rw http.ResponseWriter, r *http.Request) {
 	}
 	switch lang {
 	case "da":
-		response.Message = fmt.Sprintf("Prisen for Blyfri oktan 95 er i dag %v kroner og %v ører", response.Price.Kroner, response.Price.Orer)
+		response.Message = fmt.Sprintf("Blyfri oktan 95 koster i dag, %v, %v kroner og %v ører", GetDateString(response.Date, lang), response.Price.Kroner, response.Price.Orer)
 	case "en":
-		response.Message = fmt.Sprintf("Unleaded 95 costs %v kroner today", response.Price.FullPrice)
+		response.Message = fmt.Sprintf("Unleaded 95 costs %v kroner today (%v)", response.Price.FullPrice, GetDateString(response.Date, lang))
 	}
 
 	payload, err := json.Marshal(response)
@@ -84,6 +85,41 @@ func PricesTodayHandler(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(http.StatusOK)
 	rw.Write(payload)
+}
+
+func GetDateString(date time.Time, lang string) string {
+	switch lang {
+	case "da":
+		days := map[string]string{
+			"Monday":    "Mandag",
+			"Tuesday":   "Tirsdag",
+			"Wednesday": "Onsdag",
+			"Thursday":  "Torsdag",
+			"Friday":    "Fredag",
+			"Saturday":  "Lørdag",
+			"Sunday":    "Søndag",
+		}
+		months := map[string]string{
+			"January":   "Januar",
+			"February":  "Februar",
+			"March":     "Marts",
+			"April":     "April",
+			"May":       "Maj",
+			"June":      "Juni",
+			"July":      "Juli",
+			"August":    "August",
+			"September": "September",
+			"October":   "Oktober",
+			"November":  "November",
+			"December":  "December",
+		}
+		day := days[date.Weekday().String()]
+		month := months[date.Month().String()]
+		str := fmt.Sprintf("%v den %v. %v", day, date.Day(), month)
+		return str
+	default:
+		return date.Weekday().String()
+	}
 }
 
 type PriceTodayResponse struct {
