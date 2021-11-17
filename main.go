@@ -115,7 +115,7 @@ func GetDateString(date time.Time, lang string) string {
 		}
 		day := days[date.Weekday().String()]
 		month := months[date.Month().String()]
-		str := fmt.Sprintf("%v den %v. %v", day, date.Day(), month)
+		str := fmt.Sprintf("%v %v. %v", day, date.Day(), month)
 		return str
 	default:
 		return date.Weekday().String()
