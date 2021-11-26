@@ -54,17 +54,13 @@ func PricesTodayHandler(rw http.ResponseWriter, r *http.Request) {
 
 	SetMessage(response, lang)
 
-	payload, err := json.Marshal(response)
+	err = json.NewEncoder(rw).Encode(response)
 	if err != nil {
 		log.Println("Could not marshal json")
 		rw.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(rw, "Could not marshal json")
 		return
 	}
-
-	rw.Header().Set("Content-Type", "application/json")
-	rw.WriteHeader(http.StatusOK)
-	rw.Write(payload)
 }
 
 func SetMessage(response *PriceTodayResponse, lang string) {
