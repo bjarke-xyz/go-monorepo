@@ -9,6 +9,8 @@ RUN go mod download
 
 COPY . .
 
+RUN CGO_ENABLED=0 GOOS=linux go test ./handlers
+
 RUN CGO_ENABLED=0 GOOS=linux go build -o benzinpriser main.go
 
 FROM scratch

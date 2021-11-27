@@ -9,11 +9,10 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"strings"
 	"time"
 )
 
-func getPrices(date time.Time) (*priceResponse, error) {
+func (p *PriceService) getPrices(date time.Time) (*priceResponse, error) {
 	filenameSuffix := date.Format("2006-01-02")
 
 	filename := fmt.Sprintf("pumpepris-%v.json", filenameSuffix)
@@ -59,8 +58,8 @@ func getPrices(date time.Time) (*priceResponse, error) {
 	return &prices, nil
 }
 
-func GetPrice(date time.Time) (*Price, error) {
-	prices, err := getPrices(date)
+func (p *PriceService) GetPrice(date time.Time) (*Price, error) {
+	prices, err := p.getPrices(date)
 	if err != nil {
 		return nil, fmt.Errorf("could not get all prices: %w", err)
 	}
@@ -70,27 +69,6 @@ func GetPrice(date time.Time) (*Price, error) {
 		}
 	}
 	return nil, nil
-}
-
-type Price struct {
-	Date  *PriceTime `json:"dato"`
-	Price float32    `json:"pris"`
-}
-
-type PriceTime struct {
-	time.Time
-}
-
-func (t *PriceTime) UnmarshalJSON(b []byte) error {
-	str := string(b)
-	str = strings.Trim(str, "\"")
-	layout := "2006-01-02T15:04:05"
-	parsedTime, err := time.Parse(layout, str)
-	if err != nil {
-		return err
-	}
-	*t = PriceTime{parsedTime}
-	return nil
 }
 
 type priceResponse struct {
