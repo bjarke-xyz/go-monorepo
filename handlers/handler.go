@@ -20,21 +20,23 @@ func HandlerPricesToday(handlerCtx *HandlerCtx) http.HandlerFunc {
 			var err error
 			now, err = time.Parse("2006-01-02", nowStr)
 			if err != nil {
-				rw.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintf(rw, "Invalid `now` format")
+				respond(rw, http.StatusBadRequest, &priceTodayResponse{
+					Message: "Invalid `now` format",
+				})
 				return
 			}
 		}
 		todayPrice, err := handlerCtx.prices.GetPrice(now)
 		if err != nil {
-			log.Printf("Could not get price: %v\n", err)
-			rw.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintf(rw, "Could not get price")
+			respond(rw, http.StatusInternalServerError, &priceTodayResponse{
+				Message: "Could not get price",
+			})
 			return
 		}
 		if todayPrice == nil {
-			rw.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(rw, "No data for date %v", now)
+			respond(rw, http.StatusBadRequest, &priceTodayResponse{
+				Message: fmt.Sprintf("No data for date %v", now),
+			})
 			return
 		}
 
@@ -46,8 +48,9 @@ func HandlerPricesToday(handlerCtx *HandlerCtx) http.HandlerFunc {
 
 		response, err := toResponse([]*priser.Price{todayPrice, tomorrowPrice})
 		if err != nil {
-			rw.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintln(rw, err.Error())
+			respond(rw, http.StatusInternalServerError, &priceTodayResponse{
+				Message: err.Error(),
+			})
 			return
 		}
 
@@ -55,13 +58,17 @@ func HandlerPricesToday(handlerCtx *HandlerCtx) http.HandlerFunc {
 
 		setMessage(response, lang)
 
-		err = json.NewEncoder(rw).Encode(response)
-		if err != nil {
-			log.Println("Could not marshal json")
-			rw.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintf(rw, "Could not marshal json")
-			return
-		}
+		respond(rw, http.StatusOK, response)
+	}
+}
+
+func respond(rw http.ResponseWriter, status int, response *priceTodayResponse) {
+	rw.WriteHeader(status)
+	err := json.NewEncoder(rw).Encode(response)
+	if err != nil {
+		log.Println("Could not marshal json")
+		rw.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(rw, "Could not marshal json")
 	}
 }
 
