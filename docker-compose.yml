@@ -15,3 +15,11 @@ networks:
   swarm-overlay:
     external: true
     name: swarm-overlay
+
+secrets:
+  prod_redis_addr:
+    external: true
+  prod_redis_user:
+    external: true
+  prod_redis_pass:
+    external: true
