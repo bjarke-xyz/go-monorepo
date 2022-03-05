@@ -19,7 +19,11 @@ func main() {
 		port = ":8080"
 	}
 
-	err := godotenv.Load(".env", "/run/secrets/env")
+	err := godotenv.Load("/run/secrets/env")
+	if err != nil {
+		log.Printf("Error loading /run/secrets/env file: %v", err)
+	}
+	err = godotenv.Load(".env")
 	if err != nil {
 		log.Printf("Error loading .env file: %v", err)
 	}
