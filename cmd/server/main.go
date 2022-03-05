@@ -2,7 +2,6 @@ package main
 
 import (
 	"benzinpriser/internal/cache"
-	"benzinpriser/internal/configuration"
 	"benzinpriser/internal/handlers"
 	"benzinpriser/internal/middleware"
 	"benzinpriser/internal/priser"
@@ -20,7 +19,7 @@ func main() {
 		port = ":8080"
 	}
 
-	err := godotenv.Load()
+	err := godotenv.Load(".env", "/run/secrets/env")
 	if err != nil {
 		log.Printf("Error loading .env file: %v", err)
 	}
@@ -34,9 +33,9 @@ func main() {
 func router(r *mux.Router) {
 	r.Use(middleware.LoggingMiddleware)
 
-	redisAddr := configuration.GetSwarmSecret("prod_redis_addr", os.Getenv("REDIS_ADDR"))
-	redisUser := configuration.GetSwarmSecret("prod_redis_user", os.Getenv("REDIS_USERNAME"))
-	redisPass := configuration.GetSwarmSecret("prod_redis_pass", os.Getenv("REDIS_PASSWORD"))
+	redisAddr := os.Getenv("REDIS_ADDR")
+	redisUser := os.Getenv("REDIS_USERNAME")
+	redisPass := os.Getenv("REDIS_PASSWORD")
 
 	cache := cache.NewRedisCache(redisAddr, redisUser, redisPass)
 	handlerCtx := handlers.NewHandlerCtx(&priser.PriceService{
