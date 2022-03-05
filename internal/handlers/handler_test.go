@@ -1,8 +1,9 @@
 package handlers_test
 
 import (
-	"benzinpriser/handlers"
-	"benzinpriser/priser"
+	"benzinpriser/internal/handlers"
+	"benzinpriser/internal/priser"
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -81,7 +82,7 @@ type SamePrices struct {
 	priser.PriceGetter
 }
 
-func (p *SamePrices) GetPrice(date time.Time) (*priser.Price, error) {
+func (p *SamePrices) GetPrice(ctx context.Context, date time.Time, fuelType priser.FuelType) (*priser.Price, error) {
 	return &priser.Price{
 		Date: &priser.PriceTime{
 			Time: date,
@@ -94,7 +95,7 @@ type CheaperPrices struct {
 	priser.PriceGetter
 }
 
-func (p *CheaperPrices) GetPrice(date time.Time) (*priser.Price, error) {
+func (p *CheaperPrices) GetPrice(ctx context.Context, date time.Time, fuelType priser.FuelType) (*priser.Price, error) {
 	if date.Day() == 27 {
 		return &priser.Price{
 			Date: &priser.PriceTime{
@@ -115,7 +116,7 @@ type ExpensivePrices struct {
 	priser.PriceGetter
 }
 
-func (p *ExpensivePrices) GetPrice(date time.Time) (*priser.Price, error) {
+func (p *ExpensivePrices) GetPrice(ctx context.Context, date time.Time, fuelType priser.FuelType) (*priser.Price, error) {
 	if date.Day() == 27 {
 		return &priser.Price{
 			Date: &priser.PriceTime{
@@ -136,6 +137,6 @@ type NoPrice struct {
 	priser.PriceGetter
 }
 
-func (p *NoPrice) GetPrice(date time.Time) (*priser.Price, error) {
+func (p *NoPrice) GetPrice(ctx context.Context, date time.Time, fuelType priser.FuelType) (*priser.Price, error) {
 	return nil, nil
 }

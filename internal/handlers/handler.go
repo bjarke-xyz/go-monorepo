@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"benzinpriser/priser"
+	"benzinpriser/internal/priser"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -26,7 +26,20 @@ func HandlerPricesToday(handlerCtx *HandlerCtx) http.HandlerFunc {
 				return
 			}
 		}
-		todayPrice, err := handlerCtx.prices.GetPrice(now)
+
+		fuelTypeStr := urlParams.Get("fuelType")
+		if fuelTypeStr == "" {
+			fuelTypeStr = "1"
+		}
+		fuelTypeInt, err := strconv.Atoi(fuelTypeStr)
+		if err != nil {
+			log.Printf("Error converting fuelType from str: %v", err)
+			fuelTypeInt = 1
+		}
+		fuelType := priser.FuelType(fuelTypeInt)
+
+		ctx := r.Context()
+		todayPrice, err := handlerCtx.prices.GetPrice(ctx, now, fuelType)
 		if err != nil {
 			respond(rw, http.StatusInternalServerError, &priceTodayResponse{
 				Message: "Could not get price",
@@ -41,7 +54,7 @@ func HandlerPricesToday(handlerCtx *HandlerCtx) http.HandlerFunc {
 		}
 
 		tomorrowTime := now.AddDate(0, 0, 1)
-		tomorrowPrice, err := handlerCtx.prices.GetPrice(tomorrowTime)
+		tomorrowPrice, err := handlerCtx.prices.GetPrice(ctx, tomorrowTime, fuelType)
 		if err != nil {
 			log.Printf("Could not get tomorrow price for date %v: %v\n", tomorrowTime, err)
 		}
@@ -56,7 +69,7 @@ func HandlerPricesToday(handlerCtx *HandlerCtx) http.HandlerFunc {
 
 		lang := urlParams.Get("lang")
 
-		setMessage(response, lang)
+		setMessage(response, fuelType, lang)
 
 		respond(rw, http.StatusOK, response)
 	}
@@ -72,7 +85,7 @@ func respond(rw http.ResponseWriter, status int, response *priceTodayResponse) {
 	}
 }
 
-func setMessage(response *priceTodayResponse, lang string) {
+func setMessage(response *priceTodayResponse, fuelType priser.FuelType, lang string) {
 	if lang == "" {
 		lang = "en"
 	}
@@ -80,9 +93,9 @@ func setMessage(response *priceTodayResponse, lang string) {
 	todayPrice := response.Prices[0]
 	switch lang {
 	case "da":
-		response.Message = fmt.Sprintf("Dagens dato er %v. Blyfri oktan 95 koster %v kroner og %v ører.", getDateString(response.Date, lang), todayPrice.Kroner, todayPrice.Orer)
+		response.Message = fmt.Sprintf("Dagens dato er %v. %v koster %v kroner og %v ører.", getDateString(response.Date, lang), fuelTypeToString(fuelType, lang), todayPrice.Kroner, todayPrice.Orer)
 	case "en":
-		response.Message = fmt.Sprintf("Today is %v. The price of Unleaded octane 95 is %v kroner.", getDateString(response.Date, lang), todayPrice.FullPrice)
+		response.Message = fmt.Sprintf("Today is %v. The price of %v is %v kroner.", getDateString(response.Date, lang), fuelTypeToString(fuelType, lang), todayPrice.FullPrice)
 	}
 
 	if len(response.Prices) > 1 {
@@ -104,6 +117,32 @@ func setMessage(response *priceTodayResponse, lang string) {
 			response.Message = fmt.Sprintf("%v I morgen %v, %v kroner og %v ører.", response.Message, interposedPhrase[lang], tomorrowPrice.Kroner, tomorrowPrice.Orer)
 		case "en":
 			response.Message = fmt.Sprintf("%v Tomorrow %v, %v kroner.", response.Message, interposedPhrase[lang], tomorrowPrice.FullPrice)
+		}
+	}
+}
+
+func fuelTypeToString(fuelType priser.FuelType, lang string) string {
+	if lang == "" {
+		lang = "en"
+	}
+	switch lang {
+	case "da":
+		switch fuelType {
+		case priser.FuelTypeOktane100:
+			return "Oktan 100"
+		case priser.FuelTypeDiesel:
+			return "Diesel"
+		default:
+			return "Blyfri oktan 95"
+		}
+	default:
+		switch fuelType {
+		case priser.FuelTypeOktane100:
+			return "Octane 100"
+		case priser.FuelTypeDiesel:
+			return "Diesel"
+		default:
+			return "Unleaded octane 95"
 		}
 	}
 }
