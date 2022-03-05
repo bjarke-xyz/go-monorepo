@@ -4,6 +4,10 @@ services:
     image: registry.bjarke.xyz/benzinpriser
     build:
       context: ./
+    secrets:
+      - prod_redis_addr
+      - prod_redis_user
+      - prod_redis_pass
     networks:
       - swarm-overlay
 

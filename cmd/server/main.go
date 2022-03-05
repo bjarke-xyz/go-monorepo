@@ -2,6 +2,7 @@ package main
 
 import (
 	"benzinpriser/internal/cache"
+	"benzinpriser/internal/configuration"
 	"benzinpriser/internal/handlers"
 	"benzinpriser/internal/middleware"
 	"benzinpriser/internal/priser"
@@ -33,7 +34,11 @@ func main() {
 func router(r *mux.Router) {
 	r.Use(middleware.LoggingMiddleware)
 
-	cache := cache.NewRedisCache(os.Getenv("REDIS_ADDR"), os.Getenv("REDIS_USERNAME"), os.Getenv("REDIS_PASSWORD"))
+	redisAddr := configuration.GetSwarmSecret("prod_redis_addr", os.Getenv("REDIS_ADDR"))
+	redisUser := configuration.GetSwarmSecret("prod_redis_user", os.Getenv("REDIS_USERNAME"))
+	redisPass := configuration.GetSwarmSecret("prod_redis_pass", os.Getenv("REDIS_PASSWORD"))
+
+	cache := cache.NewRedisCache(redisAddr, redisUser, redisPass)
 	handlerCtx := handlers.NewHandlerCtx(&priser.PriceService{
 		Cache: cache,
 	})
