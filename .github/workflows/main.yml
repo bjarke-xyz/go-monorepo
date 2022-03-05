@@ -2,24 +2,63 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main]
+    branches:
+      - 'main'
 
 jobs:
-  deploy:
-    name: CD Pipeline
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to prod
-        uses: appleboy/ssh-action@v0.0.7
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to private registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ secrets.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          builder: ${{ steps.buildx.outputs.name }}
+          push: true
+          tags: '${{ secrets.REGISTRY_URL }}/${{ github.event.repository.name }}'
+      - name: Notify on error
+        uses: Ilshidur/action-discord@0.3.2
+        if: failure() && steps.build.outcome == 'failure'
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: "⚠️ {{ EVENT_PAYLOAD.repository.full_name }} failed to build. <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}>"
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: SSH
+        id: ssh
+        uses: appleboy/ssh-action@v0.1.4
         with:
           username: ${{ secrets.SSH_DEPLOYMENT_USERNAME }}
           host: ${{ secrets.SSH_DEPLOYMENT_HOST }}
           key: ${{ secrets.SSH_DEPLOYMENT_KEY }}
-          script: cd ${{ secrets.SSH_DEPLOYMENT_PROJECT_DIR }} && git reset --hard && git pull origin main && ${{ secrets.SSH_DEPLOYMENT_PROJECT_DIR }}/deployment.sh
-
-      - name: Notification
+          script: ${{ secrets.SSH_DEPLOYMENT_SCRIPT_SWARM }} ${{ github.repository }} ${{ github.event.repository.name }}
+      - name: Notify on error
+        uses: Ilshidur/action-discord@0.3.2
+        if: failure() && steps.ssh.outcome == 'failure'
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        uses: Ilshidur/action-discord@master
         with:
-          args: "The project {{ EVENT_PAYLOAD.repository.full_name }} has been deployed."
+          args: "⚠️ {{ EVENT_PAYLOAD.repository.full_name }} failed to release. <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}>"
+      - name: Notify on success
+        uses: Ilshidur/action-discord@0.3.2
+        if: success() && steps.ssh.outcome == 'success'
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: "🚀 {{ EVENT_PAYLOAD.repository.full_name }} has been released. <https://github.com/${{ github.repository }}/>"
+
