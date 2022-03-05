@@ -22,7 +22,7 @@ func main() {
 
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
+		log.Printf("Error loading .env file: %v", err)
 	}
 
 	r := mux.NewRouter()
