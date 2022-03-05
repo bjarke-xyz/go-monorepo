@@ -4,8 +4,6 @@ services:
     image: registry.bjarke.xyz/benzinpriser
     build:
       context: ./
-    volumes:
-      - /tmp:/tmp
     networks:
       - swarm-overlay
 

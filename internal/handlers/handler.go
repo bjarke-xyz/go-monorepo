@@ -76,6 +76,7 @@ func HandlerPricesToday(handlerCtx *HandlerCtx) http.HandlerFunc {
 }
 
 func respond(rw http.ResponseWriter, status int, response *priceTodayResponse) {
+	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(status)
 	err := json.NewEncoder(rw).Encode(response)
 	if err != nil {
