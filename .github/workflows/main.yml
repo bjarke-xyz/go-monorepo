@@ -14,4 +14,12 @@ jobs:
       - name: Publish
         uses: cloudflare/wrangler-action@1.2.0
         with:
+          preCommands: |
+            echo "*** pre command ***"
+            cp wrangler.toml.example wrangler.toml
+            sed -i  's/PROD_KV_ID/${{ secrets.CF_FUELPRICES_KV_ID }}' wrangler.toml
           apiToken: ${{ secrets.CF_WORKER_TOKEN }}
+          environment: 'production'
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}

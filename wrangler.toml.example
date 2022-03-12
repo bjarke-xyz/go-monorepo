@@ -17,6 +17,6 @@ format = "service-worker"
 
 [env.production]
 kv_namespaces = [
-    { binding = "FUELPRICES", id = "" }
+    { binding = "FUELPRICES", id = "PROD_KV_ID" }
 ]
 route = "fuelprices.bjarke.xyz/*"
