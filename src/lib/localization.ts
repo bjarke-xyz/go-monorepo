@@ -2,6 +2,17 @@ import { DayPrices, FuelType, Price } from './prices'
 
 export type Language = 'da' | 'en'
 
+export function getErrorText(language: Language): string {
+  switch (language) {
+    case 'da':
+      return 'Der blev ikke fundet nogen priser for den dato'
+    case 'en':
+      return 'No prices were found for that date'
+    default:
+      return 'No prices were found for that date'
+  }
+}
+
 export function getText(
   price: DayPrices,
   fuelType: FuelType,

@@ -1,4 +1,4 @@
-import { getText, Language } from '../lib/localization'
+import { getErrorText, getText, Language } from '../lib/localization'
 import { FuelType, PriceGetter } from '../lib/prices'
 
 export async function handleGetRequest(
@@ -8,8 +8,15 @@ export async function handleGetRequest(
   const { date, fuelType, language } = parseArguments(request)
   const value = await priceGetter.getPrices(date, fuelType)
   if (!value) {
-    return new Response('asdf', {
+    const error = {
+      message: getErrorText(language),
+      prices: [],
+    }
+    return new Response(JSON.stringify(error), {
       status: 404,
+      headers: {
+        'Content-Type': 'application/json',
+      },
     })
   }
   const response = {
