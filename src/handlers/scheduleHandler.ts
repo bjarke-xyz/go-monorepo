@@ -1,12 +1,13 @@
 import { PriceGetter } from '../lib/prices'
 
+declare const CACHE_REFRESH_KEY: string
+
 export async function handlePostRequest(
   request: Request,
   priceGetter: PriceGetter,
 ): Promise<Response> {
-  const key = 'e3e8528c-075b-4eca-b372-c800646a24b7'
   const authHeader = request.headers.get('authorization')
-  if (authHeader !== key) {
+  if (authHeader !== CACHE_REFRESH_KEY) {
     return new Response(null, {
       status: 403,
     })
@@ -25,8 +26,8 @@ export async function handleScheduledEvent(
 async function refreshCache(priceGetter: PriceGetter): Promise<void> {
   try {
     await priceGetter.refreshCache('Unleaded95')
-    // await priceGetter.refreshCache('Octane100')
-    // await priceGetter.refreshCache('Diesel')
+    await priceGetter.refreshCache('Octane100')
+    await priceGetter.refreshCache('Diesel')
   } catch (error) {
     console.log('Error during cache refresh:', error)
   }
