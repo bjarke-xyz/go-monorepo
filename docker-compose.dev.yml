@@ -1,7 +1,0 @@
-version: "3.7"
-services:
-  benzinpriser:
-    build:
-      context: ./
-    ports:
-      - "8080:8080"
