@@ -23,7 +23,7 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          args: "⚠️ {{ EVENT_PAYLOAD.repository.full_name }} failed to build. <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}>"
+          args: "⚠️ {{ EVENT_PAYLOAD.repository.full_name }} tests failed. <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}>"
 
   deploy:
     runs-on: ubuntu-latest
@@ -39,6 +39,7 @@ jobs:
             cp wrangler.toml.example wrangler.toml
             sed -i 's/PROD_KV_ID/${{ secrets.CF_FUELPRICES_KV_ID }}/' wrangler.toml
             sed -i 's/CACHEREFRESHKEY-REPLACEME/${{ secrets.CACHE_REFRESH_KEY }}/' wrangler.toml
+            exit 1
           apiToken: ${{ secrets.CF_WORKER_TOKEN }}
           environment: 'production'
         env:
