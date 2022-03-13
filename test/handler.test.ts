@@ -1,6 +1,6 @@
 import makeServiceWorkerEnv from 'service-worker-mock'
 import { handleGetRequest } from '../src/handlers/getHandler'
-import { DayPrices, FuelType, IPriceGetter } from '../src/lib/prices'
+import { FuelType, IPriceGetter } from '../src/lib/prices'
 
 function createPriceGetter(
   todayPrice: number,
@@ -8,6 +8,7 @@ function createPriceGetter(
   tomorrowPrice?: number,
 ): IPriceGetter {
   return {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     getPrices: function (date: Date, fuelType: FuelType) {
       return new Promise((resolve) =>
         resolve({
@@ -34,6 +35,7 @@ function createPriceGetter(
 
 function createNoPriceGetter(): IPriceGetter {
   return {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     getPrices: function (date: Date, fuelType: FuelType) {
       return new Promise((resolve) => resolve(null))
     },
@@ -43,7 +45,7 @@ function createNoPriceGetter(): IPriceGetter {
   }
 }
 
-declare let global: any
+declare let global: unknown
 describe('handle', () => {
   beforeEach(() => {
     Object.assign(global, makeServiceWorkerEnv())
