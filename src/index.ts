@@ -9,9 +9,9 @@ const priceGetter = new PriceGetter()
 
 addEventListener('fetch', async (event) => {
   if (event.request.method == 'GET') {
-    event.respondWith(handleGetRequest(event.request, priceGetter))
+    event.respondWith(handleGetRequest(event, priceGetter))
   } else if (event.request.method == 'POST') {
-    event.respondWith(handlePostRequest(event.request, priceGetter))
+    event.respondWith(handlePostRequest(event, priceGetter))
   } else {
     event.respondWith(
       new Response('Not found', {

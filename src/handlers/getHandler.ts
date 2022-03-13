@@ -2,33 +2,46 @@ import { getErrorText, getText, Language } from '../lib/localization'
 import { FuelType, PriceGetter } from '../lib/prices'
 
 export async function handleGetRequest(
-  request: Request,
+  event: FetchEvent,
   priceGetter: PriceGetter,
 ): Promise<Response> {
-  const { date, fuelType, language } = parseArguments(request)
-  const value = await priceGetter.getPrices(date, fuelType)
-  if (!value) {
-    const error = {
-      message: getErrorText(language),
-      prices: [],
+  const request = event.request
+  const cache = caches.default
+  const cacheUrl = new URL(request.url)
+  const cacheKey = new Request(cacheUrl.toString(), request)
+
+  let response = await cache.match(cacheKey)
+
+  if (!response) {
+    console.log('cache miss')
+    const { date, fuelType, language } = parseArguments(request)
+    const value = await priceGetter.getPrices(date, fuelType)
+    if (!value) {
+      const error = {
+        message: getErrorText(language),
+        prices: [],
+      }
+      return new Response(JSON.stringify(error), {
+        status: 404,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
     }
-    return new Response(JSON.stringify(error), {
-      status: 404,
+    const responseObj = {
+      message: getText(value, fuelType, language),
+      prices: [value],
+    }
+    const json = JSON.stringify(responseObj)
+    response = new Response(json, {
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 's-maxage=60',
       },
     })
+    event.waitUntil(cache.put(cacheKey, response.clone()))
   }
-  const response = {
-    message: getText(value, fuelType, language),
-    prices: [value],
-  }
-  const json = JSON.stringify(response)
-  return new Response(json, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
+  return response
 }
 
 function parseArguments(request: Request): {
