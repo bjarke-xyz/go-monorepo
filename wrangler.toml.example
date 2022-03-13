@@ -22,7 +22,7 @@ format = "service-worker"
 kv_namespaces = [
     { binding = "FUELPRICES", id = "PROD_KV_ID" }
 ]
-route = "fuelprices.bjarke.xyz/*"
+route = "https://fuelprices.bjarke.xyz/*"
 
 [env.production.vars]
 CACHE_REFRESH_KEY = "CACHEREFRESHKEY-REPLACEME"
