@@ -15,7 +15,7 @@ jobs:
         uses: cloudflare/wrangler-action@1.3.0
         with:
           preCommands: |
-            echo "*** pre command ***"
+            npm run test
             cp wrangler.toml.example wrangler.toml
             sed -i 's/PROD_KV_ID/${{ secrets.CF_FUELPRICES_KV_ID }}/' wrangler.toml
             sed -i 's/CACHEREFRESHKEY-REPLACEME/${{ secrets.CACHE_REFRESH_KEY }}/' wrangler.toml
