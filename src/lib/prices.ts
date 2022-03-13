@@ -18,6 +18,10 @@ interface OkPrices {
   historik: {
     dato: string
     pris: number
+    prisExclAfgifterExclMoms?: number
+    prisExclAfgifterInclMoms?: number
+    prisExclMoms?: number
+    varenr?: number
   }[]
 }
 
@@ -32,6 +36,15 @@ export interface DayPrices {
   tomorrow: Price | null
 }
 
+// https://stackoverflow.com/a/15289883
+function dateDiffInDays(a: Date, b: Date) {
+  const _MS_PER_DAY = 1000 * 60 * 60 * 24
+  const utc1 = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate())
+  const utc2 = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate())
+
+  return Math.floor((utc2 - utc1) / _MS_PER_DAY)
+}
+
 export interface IPriceGetter {
   getPrices: (date: Date, fuelType: FuelType) => Promise<DayPrices | null>
   refreshCache: (fuelType: FuelType) => Promise<void>
@@ -41,7 +54,14 @@ export class PriceGetter implements IPriceGetter {
    * Get price for the date requested, the day before, and the day after if possible
    */
   async getPrices(date: Date, fuelType: FuelType): Promise<DayPrices | null> {
-    const fuelpricesStr = await FUELPRICES.get(`prices:${fuelType}`)
+    const dayDiff = Math.abs(dateDiffInDays(new Date(), date))
+    let fuelpricesStr: string | null = null
+    if (dayDiff < 7) {
+      fuelpricesStr = await FUELPRICES.get(`prices:${fuelType}:recent`)
+    } else {
+      fuelpricesStr = await FUELPRICES.get(`prices:${fuelType}`)
+    }
+
     if (!fuelpricesStr) {
       return null
     }
@@ -55,7 +75,7 @@ export class PriceGetter implements IPriceGetter {
       historik: OkPrices['historik'],
       date: Date,
     ): OkPrices['historik'][0] | null {
-      const price = fuelprices.historik.find((price) => {
+      const price = historik.find((price) => {
         const [year, month, day] = price.dato
           .split('T')[0]
           .split('-')
@@ -125,8 +145,24 @@ export class PriceGetter implements IPriceGetter {
       },
     )
     console.log('OK status:', resp.status)
-    const priceResp = await resp.text()
-    await FUELPRICES.put(`prices:${fuelType}`, priceResp)
+    const priceResp = (await resp.json()) as OkPrices
+    priceResp.historik.forEach((price) => {
+      delete price.prisExclAfgifterExclMoms
+      delete price.prisExclAfgifterInclMoms
+      delete price.prisExclMoms
+      delete price.varenr
+    })
+    await FUELPRICES.put(`prices:${fuelType}`, JSON.stringify(priceResp))
+
+    const recentHistorik = (priceResp.historik ?? []).slice(-10)
+    const recentPrices: OkPrices = {
+      historik: recentHistorik,
+    }
+    await FUELPRICES.put(
+      `prices:${fuelType}:recent`,
+      JSON.stringify(recentPrices),
+    )
+
     return
   }
 }
