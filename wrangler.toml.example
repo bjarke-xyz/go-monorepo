@@ -26,3 +26,6 @@ route = "fuelprices.bjarke.xyz/*"
 
 [env.production.vars]
 CACHE_REFRESH_KEY = "CACHEREFRESHKEY-REPLACEME"
+
+[triggers]
+crons = ["45 5/7 * * *"]
