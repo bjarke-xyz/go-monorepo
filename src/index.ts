@@ -9,7 +9,7 @@ const priceGetter = new PriceGetter()
 
 addEventListener('fetch', async (event) => {
   if (event.request.method == 'GET') {
-    event.respondWith(handleGetRequest(event, priceGetter))
+    event.respondWith(handleGetRequest(event, event.request, priceGetter))
   } else if (event.request.method == 'POST') {
     event.respondWith(handlePostRequest(event, priceGetter))
   } else {

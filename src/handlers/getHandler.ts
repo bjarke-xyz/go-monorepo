@@ -2,13 +2,16 @@ import { getErrorText, getText, Language } from '../lib/localization'
 import { FuelType, PriceGetter } from '../lib/prices'
 
 export async function handleGetRequest(
-  event: FetchEvent,
+  event: FetchEvent | null,
+  request: Request,
   priceGetter: PriceGetter,
 ): Promise<Response> {
-  const request = event.request
   const cache = caches.default
 
-  let response = await cache.match(request)
+  let response: Response | undefined
+  if (cache) {
+    response = await cache.match(request)
+  }
 
   if (!response) {
     console.log('cache miss')
@@ -37,7 +40,9 @@ export async function handleGetRequest(
         'Cache-Control': 's-maxage=60',
       },
     })
-    event.waitUntil(cache.put(request, response.clone()))
+    if (event) {
+      event.waitUntil(cache.put(request, response.clone()))
+    }
   }
   return response
 }
