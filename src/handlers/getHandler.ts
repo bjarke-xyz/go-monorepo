@@ -14,7 +14,6 @@ export async function handleGetRequest(
   }
 
   if (!response) {
-    console.log('cache miss')
     const { date, fuelType, language } = parseArguments(request)
     const value = await priceGetter.getPrices(date, fuelType)
     if (!value) {
@@ -37,7 +36,7 @@ export async function handleGetRequest(
     response = new Response(json, {
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 's-maxage=60',
+        'Cache-Control': `s-maxage=${60 * 30}`,
       },
     })
     if (event) {
