@@ -7,10 +7,8 @@ export async function handleGetRequest(
 ): Promise<Response> {
   const request = event.request
   const cache = caches.default
-  const cacheUrl = new URL(request.url)
-  const cacheKey = new Request(cacheUrl.toString(), request)
 
-  let response = await cache.match(cacheKey)
+  let response = await cache.match(request)
 
   if (!response) {
     console.log('cache miss')
@@ -39,7 +37,7 @@ export async function handleGetRequest(
         'Cache-Control': 's-maxage=60',
       },
     })
-    event.waitUntil(cache.put(cacheKey, response.clone()))
+    event.waitUntil(cache.put(request, response.clone()))
   }
   return response
 }
