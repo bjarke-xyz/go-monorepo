@@ -92,6 +92,6 @@ describe('handle', () => {
     )
     expect(result.status).toEqual(404)
     const text = (await result.json()) as { message: string }
-    expect(text.message).toContain('No prices were found')
+    expect(text.message).toContain('fisk')
   })
 })
