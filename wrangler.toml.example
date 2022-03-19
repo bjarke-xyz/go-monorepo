@@ -28,4 +28,4 @@ route = "fuelprices.bjarke.xyz/*"
 CACHE_REFRESH_KEY = "CACHEREFRESHKEY-REPLACEME"
 
 [triggers]
-crons = ["45 5/7 * * *"]
+crons = ["0 */1 * * *"]
