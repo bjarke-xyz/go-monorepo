@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash'
 declare const FUELPRICES: KVNamespace
 
 export type FuelType = 'Unleaded95' | 'Octane100' | 'Diesel'
@@ -158,11 +159,52 @@ export class PriceGetter implements IPriceGetter {
     const recentPrices: OkPrices = {
       historik: recentHistorik,
     }
+    const prevRecentPrices = await FUELPRICES.get(`prices:${fuelType}:recent`)
     await FUELPRICES.put(
       `prices:${fuelType}:recent`,
       JSON.stringify(recentPrices),
     )
 
+    if (prevRecentPrices) {
+      try {
+        const prevRecentPricesObj = JSON.parse(prevRecentPrices) as OkPrices
+        await postToQueue(recentPrices, prevRecentPricesObj, fuelType)
+      } catch (error) {
+        console.error('error posting to queue:', error)
+      }
+    }
+
     return
   }
+}
+
+declare const MQ_URL: string
+declare const MQ_VHOST: string
+declare const MQ_EXCHANGE: string
+declare const MQ_USER: string
+declare const MQ_PASS: string
+async function postToQueue(
+  recentPrices: OkPrices,
+  prevRecentPrices: OkPrices,
+  fuelType: FuelType,
+): Promise<void> {
+  // if (isEqual(recentPrices, prevRecentPrices)) {
+  //   return
+  // }
+  const mqUrl = `${MQ_URL}/api/exchanges/${MQ_VHOST}/${MQ_EXCHANGE}/publish`
+  const body = {
+    properties: {},
+    routing_key: 'test',
+    payload: JSON.stringify({ recentPrices, prevRecentPrices, fuelType }),
+    payload_encoding: 'string',
+  }
+  console.log(mqUrl)
+  const resp = await fetch(mqUrl, {
+    method: 'POST',
+    body: JSON.stringify(body),
+    headers: {
+      Authorization: `Basic ${btoa(MQ_USER + ':' + MQ_PASS)}`,
+    },
+  })
+  console.log('Post to queue response: ', resp.status)
 }

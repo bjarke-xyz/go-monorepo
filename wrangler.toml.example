@@ -13,6 +13,12 @@ kv_namespaces = [
 [vars]
 CACHE_REFRESH_KEY = "1234"
 
+MQ_URL = "https://example.org"
+MQ_VHOST = "vhost"
+MQ_EXCHANGE = "amq.default"
+MQ_USER = "user"
+MQ_PASS = "pass"
+
 [build]
 command = "npm install && npm run build"
 [build.upload]
@@ -26,6 +32,12 @@ route = "fuelprices.bjarke.xyz/*"
 
 [env.production.vars]
 CACHE_REFRESH_KEY = "CACHEREFRESHKEY-REPLACEME"
+
+MQ_URL = "MQURL-REPLACEME"
+MQ_VHOST = "MQVHOST-REPLACEME"
+MQ_EXCHANGE = "MQEXCHANGE-REPLACEME"
+MQ_USER = "MQUSER-REPLACEME"
+MQ_PASS = "MQPASS-REPLACEME"
 
 [triggers]
 crons = ["0 */1 * * *"]

@@ -21,6 +21,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^3.0.0",
     "@types/jest": "^26.0.23",
+    "@types/lodash": "^4.14.180",
     "@types/service-worker-mock": "^2.0.1",
     "@typescript-eslint/eslint-plugin": "^4.16.1",
     "@typescript-eslint/parser": "^4.16.1",
@@ -37,6 +38,7 @@
     "webpack-cli": "^4.7.0"
   },
   "dependencies": {
-    "itty-router": "^2.5.2"
+    "itty-router": "^2.5.2",
+    "lodash": "^4.17.21"
   }
 }
