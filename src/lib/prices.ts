@@ -181,6 +181,7 @@ export class PriceGetter implements IPriceGetter {
 declare const MQ_URL: string
 declare const MQ_VHOST: string
 declare const MQ_EXCHANGE: string
+declare const MQ_QUEUE: string
 declare const MQ_USER: string
 declare const MQ_PASS: string
 async function postToQueue(
@@ -194,7 +195,7 @@ async function postToQueue(
   const mqUrl = `${MQ_URL}/api/exchanges/${MQ_VHOST}/${MQ_EXCHANGE}/publish`
   const body = {
     properties: {},
-    routing_key: 'test',
+    routing_key: MQ_QUEUE,
     payload: JSON.stringify({ recentPrices, prevRecentPrices, fuelType }),
     payload_encoding: 'string',
   }

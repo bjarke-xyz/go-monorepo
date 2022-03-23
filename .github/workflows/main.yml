@@ -42,6 +42,7 @@ jobs:
             sed -i 's/MQURL-REPLACEME/${{ secrets.MQ_URL }}/' wrangler.toml
             sed -i 's/MQVHOST-REPLACEME/${{ secrets.MQ_VHOST }}/' wrangler.toml
             sed -i 's/MQEXCHANGE-REPLACEME/${{ secrets.MQ_EXCHANGE }}/' wrangler.toml
+            sed -i 's/MQQUEUE-REPLACEME/${{ secrets.MQ_QUEUE }}/' wrangler.toml
             sed -i 's/MQUSER-REPLACEME/${{ secrets.MQ_USER }}/' wrangler.toml
             sed -i 's/MQPASS-REPLACEME/${{ secrets.MQ_PASS }}/' wrangler.toml
           apiToken: ${{ secrets.CF_WORKER_TOKEN }}
