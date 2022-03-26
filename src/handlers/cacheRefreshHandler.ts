@@ -1,8 +1,10 @@
 import { PriceGetter } from '../lib/prices'
 
+export const CACHE_REFRESH_CRON = '0 */1 * * *'
+
 declare const CACHE_REFRESH_KEY: string
 
-export async function handlePostRequest(
+export async function requestHandlerCacheRefresh(
   event: FetchEvent,
   priceGetter: PriceGetter,
 ): Promise<Response> {
@@ -17,7 +19,7 @@ export async function handlePostRequest(
   return new Response('OK')
 }
 
-export async function handleScheduledEvent(
+export async function scheduledHandlerCacheRefresh(
   event: ScheduledEvent,
   priceGetter: PriceGetter,
 ): Promise<void> {

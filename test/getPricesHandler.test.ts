@@ -1,5 +1,5 @@
 import makeServiceWorkerEnv from 'service-worker-mock'
-import { handleGetRequest } from '../src/handlers/getHandler'
+import { handleGetPrices } from '../src/handlers/getPricesHandler'
 import { FuelType, IPriceGetter } from '../src/lib/prices'
 
 function createPriceGetter(
@@ -46,7 +46,7 @@ function createNoPriceGetter(): IPriceGetter {
 }
 
 declare let global: unknown
-describe('handle', () => {
+describe('get prices handler', () => {
   beforeEach(() => {
     Object.assign(global, makeServiceWorkerEnv())
     jest.resetModules()
@@ -54,7 +54,7 @@ describe('handle', () => {
 
   test('Same prices', async () => {
     const priceGetter = createPriceGetter(14.79)
-    const result = await handleGetRequest(
+    const result = await handleGetPrices(
       null,
       new Request('/', { method: 'GET' }),
       priceGetter,
@@ -67,7 +67,7 @@ describe('handle', () => {
 
   test('Cheaper yesterday prices', async () => {
     const priceGetter = createPriceGetter(14.79, 10)
-    const result = await handleGetRequest(
+    const result = await handleGetPrices(
       null,
       new Request('/', { method: 'GET' }),
       priceGetter,
@@ -79,7 +79,7 @@ describe('handle', () => {
 
   test('More expensive yesterday prices', async () => {
     const priceGetter = createPriceGetter(14.79, 15)
-    const result = await handleGetRequest(
+    const result = await handleGetPrices(
       null,
       new Request('/', { method: 'GET' }),
       priceGetter,
@@ -91,7 +91,7 @@ describe('handle', () => {
 
   test('No data found', async () => {
     const priceGetter = createNoPriceGetter()
-    const result = await handleGetRequest(
+    const result = await handleGetPrices(
       null,
       new Request('/', { method: 'GET' }),
       priceGetter,

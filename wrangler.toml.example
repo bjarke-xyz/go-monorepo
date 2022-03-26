@@ -12,6 +12,7 @@ kv_namespaces = [
 
 [vars]
 CACHE_REFRESH_KEY = "1234"
+EVENT_HANDLER_KEY = "1234"
 
 MQ_URL = "https://example.org"
 MQ_VHOST = "vhost"
@@ -33,6 +34,7 @@ route = "fuelprices.bjarke.xyz/*"
 
 [env.production.vars]
 CACHE_REFRESH_KEY = "CACHEREFRESHKEY-REPLACEME"
+EVENT_HANDLER_KEY = "EVENTHANDLERKEY-REPLACEME"
 
 MQ_URL = "MQURL-REPLACEME"
 MQ_VHOST = "MQVHOST-REPLACEME"

@@ -1,7 +1,7 @@
 import { getErrorText, getText, Language } from '../lib/localization'
 import { FuelType, PriceGetter } from '../lib/prices'
 
-export async function handleGetRequest(
+export async function handleGetPrices(
   event: FetchEvent | null,
   request: Request,
   priceGetter: PriceGetter,

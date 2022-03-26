@@ -15,7 +15,7 @@ function fuelTypeToOkItemNumber(fuelType: FuelType): number {
   }
 }
 
-interface OkPrices {
+export interface OkPrices {
   historik: {
     dato: string
     pris: number
@@ -189,9 +189,9 @@ async function postToQueue(
   prevRecentPrices: OkPrices,
   fuelType: FuelType,
 ): Promise<void> {
-  // if (isEqual(recentPrices, prevRecentPrices)) {
-  //   return
-  // }
+  if (isEqual(recentPrices, prevRecentPrices)) {
+    return
+  }
   const mqUrl = `${MQ_URL}/api/exchanges/${MQ_VHOST}/${MQ_EXCHANGE}/publish`
   const body = {
     properties: {},
@@ -199,7 +199,6 @@ async function postToQueue(
     payload: JSON.stringify({ recentPrices, prevRecentPrices, fuelType }),
     payload_encoding: 'string',
   }
-  console.log(mqUrl)
   const resp = await fetch(mqUrl, {
     method: 'POST',
     body: JSON.stringify(body),
@@ -207,5 +206,7 @@ async function postToQueue(
       Authorization: `Basic ${btoa(MQ_USER + ':' + MQ_PASS)}`,
     },
   })
-  console.log('Post to queue response: ', resp.status)
+  if (resp.status !== 200) {
+    console.log('Post to queue failed: ', resp.status)
+  }
 }
