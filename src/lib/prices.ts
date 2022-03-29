@@ -189,9 +189,9 @@ async function postToQueue(
   prevRecentPrices: OkPrices,
   fuelType: FuelType,
 ): Promise<void> {
-  // if (isEqual(recentPrices, prevRecentPrices)) {
-  //   return
-  // }
+  if (isEqual(recentPrices, prevRecentPrices)) {
+    return
+  }
   const mqUrl = `${MQ_URL}/api/exchanges/${MQ_VHOST}/${MQ_EXCHANGE}/publish`
   const body = {
     properties: {},
