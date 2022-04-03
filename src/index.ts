@@ -6,8 +6,6 @@ import {
   scheduledHandlerCacheRefresh,
 } from './handlers/cacheRefreshHandler'
 import { PriceGetter } from './lib/prices'
-import { priceChangeEventHandler } from './handlers/priceChangeEventHandler'
-import { NotificationManager } from './lib/notifications'
 
 const priceGetter = new PriceGetter()
 
@@ -19,17 +17,6 @@ router.get('/', (request, event) => {
 
 router.post('/scheduled/cache', (request, event) => {
   return requestHandlerCacheRefresh(event, priceGetter)
-})
-
-const notificationGetter = new NotificationManager()
-declare const EVENT_HANDLER_KEY: string
-router.post('/events/pricechanges', (request: Request, event) => {
-  return priceChangeEventHandler(
-    event,
-    request,
-    notificationGetter,
-    EVENT_HANDLER_KEY,
-  )
 })
 
 router.all('*', () => {
