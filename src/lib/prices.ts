@@ -133,7 +133,8 @@ export class PriceGetter implements IPriceGetter {
   async refreshCache(fuelType: FuelType): Promise<void> {
     console.log('starting fetch')
     const resp = await fetch(
-      'https://www.ok.dk/privat/produkter/benzinkort/prisudvikling/getProduktHistorik',
+      //'https://www.ok.dk/privat/produkter/benzinkort/prisudvikling/getProduktHistorik',
+      'https://www.ok.dk/privat/produkter/ok-kort/prisudvikling/getProduktHistorik',
       {
         method: 'POST',
         body: JSON.stringify({
