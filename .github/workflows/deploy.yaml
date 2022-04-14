@@ -23,4 +23,4 @@ jobs:
       - name: Synth stack
         run: npm run cdk synth
       - name: Deploy stack
-        run: npm run cdk deploy --all --require-approval never
+        run: npm run cdk deploy -- --all --require-approval never
