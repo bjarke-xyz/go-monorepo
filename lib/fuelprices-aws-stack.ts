@@ -61,8 +61,9 @@ export class FuelpricesAwsStack extends Stack {
       "cache-refresh-handler",
       {
         memorySize: 128,
-        timeout: Duration.seconds(15),
+        timeout: Duration.seconds(60),
         runtime: Runtime.NODEJS_14_X,
+        reservedConcurrentExecutions: 3,
         handler: "main",
         entry: path.join(__dirname, "../src/lambdas/cache-refresh-handler.ts"),
         environment: {

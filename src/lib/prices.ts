@@ -1,6 +1,7 @@
-import { isArray } from "lodash";
+import { isArray, chunk } from "lodash";
 const fetch = require("node-fetch");
 import { S3, DynamoDB } from "aws-sdk";
+import { addDays, format, parse, subDays } from "date-fns";
 
 export type FuelType = "Unleaded95" | "Octane100" | "Diesel";
 function fuelTypeToOkItemNumber(fuelType: FuelType): number {
@@ -98,53 +99,35 @@ export class PriceService implements IPriceService {
    * Get price for the date requested, the day before, and the day after if possible
    */
   async getPrices(date: Date, fuelType: FuelType): Promise<DayPrices | null> {
-    const dayDiff = Math.abs(dateDiffInDays(new Date(), date));
     const fuelprices: OkPrices = { historik: [] };
-    if (dayDiff < 7) {
-      try {
-        console.log("getting data from dynamodb");
-        const result = await this.db
-          .query({
-            TableName: this.tableName,
-            KeyConditionExpression: "PK = :PK",
-            ExpressionAttributeValues: {
-              ":PK": `FUELTYPE#${fuelType}`,
-            },
-          })
-          .promise();
-        (result.Items ?? []).forEach((_item) => {
-          const item = _item as { SK: string; price: number; PK: string };
+    const dateFormat = "yyyy-MM-ddT00:00:00";
+    try {
+      console.log("getting data from dynamodb");
+      const yesterdayDate = subDays(date, 1);
+      const tomorrowDate = addDays(date, 2);
+      const result = await this.db
+        .query({
+          TableName: this.tableName,
+          KeyConditionExpression: "PK = :PK AND SK BETWEEN :from AND :to",
+          ExpressionAttributeValues: {
+            ":PK": `FUELTYPE#${fuelType}`,
+            ":from": `DATE#${format(yesterdayDate, dateFormat)}`,
+            ":to": `DATE#${format(tomorrowDate, dateFormat)}`,
+          },
+        })
+        .promise();
+      (result.Items ?? []).forEach((_item) => {
+        const item = _item as { SK: string; price: number; PK: string };
 
-          const date = item.SK.split("#")[1];
+        const date = item.SK.split("#")[1];
 
-          fuelprices.historik.push({
-            dato: date,
-            pris: item.price,
-          });
+        fuelprices.historik.push({
+          dato: date,
+          pris: item.price,
         });
-      } catch (error) {
-        console.log("error getting dynamodb data", error);
-      }
-    } else {
-      console.log("getting data from s3");
-      try {
-        const jsonData = (
-          await this.s3
-            .getObject({
-              Bucket: this.s3Bucket,
-              Key: `prices/${fuelType}`,
-            })
-            .promise()
-        )?.Body?.toString("utf-8");
-        const fuelpricesObj = JSON.parse(jsonData || "") as OkPrices;
-        if (isArray(fuelpricesObj?.historik)) {
-          fuelpricesObj.historik.forEach((item) => {
-            fuelprices.historik.push(item);
-          });
-        }
-      } catch (error) {
-        console.log("error getting s3 data", error);
-      }
+      });
+    } catch (error) {
+      console.log("error getting dynamodb data", error);
     }
 
     function findPrice(
@@ -181,9 +164,7 @@ export class PriceService implements IPriceService {
       yesterday: null,
     };
 
-    const yesterdayDate = new Date();
-    const dayOffset = 24 * 60 * 60 * 1000 * 1; // 1 day
-    yesterdayDate.setTime(date.getTime() - dayOffset);
+    const yesterdayDate = subDays(date, 1);
     const yesterdayOkPrice = findPrice(fuelprices.historik, yesterdayDate);
     if (yesterdayOkPrice) {
       prices.yesterday = {
@@ -192,8 +173,7 @@ export class PriceService implements IPriceService {
       };
     }
 
-    const tomorrowDate = new Date();
-    tomorrowDate.setTime(date.getTime() + dayOffset);
+    const tomorrowDate = addDays(date, 1);
     const tomorrowOkPrice = findPrice(fuelprices.historik, tomorrowDate);
     if (tomorrowOkPrice) {
       prices.tomorrow = {
@@ -228,69 +208,134 @@ export class PriceService implements IPriceService {
       return;
     }
 
-    const recentHistorik = (priceResp.historik ?? []).slice(-10);
-    const recentPrices: OkPrices = {
-      historik: recentHistorik,
-    };
-    const ddbItems = recentPrices.historik.map((price) => {
-      return {
-        PutRequest: {
-          Item: {
-            PK: `FUELTYPE#${fueltype}`,
-            SK: `DATE#${price.dato}`,
-            price: price.pris,
-          },
+    const result = await this.db
+      .query({
+        TableName: this.tableName,
+        KeyConditionExpression: "PK = :PK",
+        ExpressionAttributeValues: {
+          ":PK": `FUELTYPE#${fueltype}`,
         },
-      };
-    });
-    console.log("ddbitems", ddbItems);
-
-    const resp = await this.db
-      .batchWrite({
-        RequestItems: {
-          [this.tableName]: ddbItems,
-        },
+        Limit: 1,
+        ScanIndexForward: false,
       })
       .promise();
+    const firstDbItem = result.Items?.[0] as {
+      SK: string;
+      price: number;
+      PK: string;
+    };
+    console.log("firstDbItem", firstDbItem?.SK);
+    console.log(
+      "firstPriceResp",
+      priceResp.historik[priceResp.historik.length - 1].dato
+    );
+    const firstDbItemDate = firstDbItem?.SK.split("#")[1];
+
+    // Nothing to do if first item is equal
+    if (
+      firstDbItemDate ===
+        priceResp.historik[priceResp.historik.length - 1].dato &&
+      firstDbItem?.price ===
+        priceResp.historik[priceResp.historik.length - 1].pris
+    ) {
+      return;
+    }
+
+    // Loop through S3 data until we find an item with matching date
+    const toInsert: OkPrices = {
+      historik: [],
+    };
+    for (const item of priceResp.historik) {
+      toInsert.historik.push(item);
+      if (item.dato === firstDbItemDate) {
+        break;
+      }
+    }
+
+    console.log("toInsert length", toInsert.historik.length);
+
+    if (toInsert.historik.length === 0) {
+      return;
+    }
+
+    const priceChunks = chunk(toInsert.historik, 25);
+
+    // Instead of writing all ~250 chunks sequentially, they could be written to a SQS queue, and concurrently be written to DynamoDB
+    let chunkIndex = 0;
+    for (const priceChunk of priceChunks) {
+      const ddbItems = priceChunk.map((price) => {
+        return {
+          PutRequest: {
+            Item: {
+              PK: `FUELTYPE#${fueltype}`,
+              SK: `DATE#${price.dato}`,
+              price: price.pris,
+            },
+          },
+        };
+      });
+
+      try {
+        const resp = await this.db
+          .batchWrite({
+            RequestItems: {
+              [this.tableName]: ddbItems,
+            },
+          })
+          .promise();
+        console.log(`written chunk ${chunkIndex} of ${priceChunks.length}`);
+        chunkIndex++;
+      } catch (error) {
+        console.error(`error writing chunk ${chunkIndex} to dynamodb`, error);
+      }
+    }
+
     console.log(`${fueltype} DONE`);
   }
 
   async fetchPrices(fuelType: FuelType): Promise<void> {
-    console.log("starting fetch");
-    const resp = await fetch(
-      //'https://www.ok.dk/privat/produkter/benzinkort/prisudvikling/getProduktHistorik',
-      "https://www.ok.dk/privat/produkter/ok-kort/prisudvikling/getProduktHistorik",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          varenr: fuelTypeToOkItemNumber(fuelType),
-          pumpepris: true,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    console.log("OK status:", resp.status);
-    const priceResp = (await resp.json()) as OkPrices;
-    priceResp.historik.forEach((price) => {
-      delete price.prisExclAfgifterExclMoms;
-      delete price.prisExclAfgifterInclMoms;
-      delete price.prisExclMoms;
-      delete price.varenr;
-    });
-    console.log(this.s3Bucket);
-    await this.s3
-      .upload({
-        Bucket: this.s3Bucket.toLowerCase(),
-        Key: `prices/${fuelType}`,
-        Body: JSON.stringify(priceResp),
-      })
-      .promise();
+    let priceResp: OkPrices | null = null;
+    try {
+      const resp = await fetch(
+        //'https://www.ok.dk/privat/produkter/benzinkort/prisudvikling/getProduktHistorik',
+        "https://www.ok.dk/privat/produkter/ok-kort/prisudvikling/getProduktHistorik",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            varenr: fuelTypeToOkItemNumber(fuelType),
+            pumpepris: true,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      priceResp = (await resp.json()) as OkPrices;
+      priceResp.historik.forEach((price) => {
+        delete price.prisExclAfgifterExclMoms;
+        delete price.prisExclAfgifterInclMoms;
+        delete price.prisExclMoms;
+        delete price.varenr;
+      });
+    } catch (error) {
+      console.error("error fetching data from OK", error);
+    }
 
-    const recentHistorik = (priceResp.historik ?? []).slice(-10);
-    const recentPrices: OkPrices = {
-      historik: recentHistorik,
-    };
+    if (!priceResp) {
+      console.error("priceResp was null");
+      return;
+    }
+
+    try {
+      await this.s3
+        .upload({
+          Bucket: this.s3Bucket.toLowerCase(),
+          Key: `prices/${fuelType}`,
+          Body: JSON.stringify(priceResp),
+        })
+        .promise();
+    } catch (error) {
+      console.error("error uploading to S3", error);
+    }
   }
 }
