@@ -1,14 +1,12 @@
-# Welcome to your CDK TypeScript project
+# Fuelprices
+![Deploy workflow badge](https://github.com/bjarke-xyz/fuelprices/actions/workflows/deploy.yaml/badge.svg)
 
-This is a blank project for TypeScript development with CDK.
+HTTP API for checking fuel prices.
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
-## Useful commands
+## iOS Shortcut
+Created to be used with an iOS shortcut, so it can be called while driving, via Siri. To use with Siri, activate Siri and say the name of the iOS shortcut (in example below: 'Benzinpriser'). Siri will read the message property of the JSON result.
 
-* `npm run build`   compile typescript to js
-* `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
-* `cdk deploy`      deploy this stack to your default AWS account/region
-* `cdk diff`        compare deployed stack with current state
-* `cdk synth`       emits the synthesized CloudFormation template
+Example shortcut:
+
+![ios shortcut](./docs/ios_shortcut.jpeg)
