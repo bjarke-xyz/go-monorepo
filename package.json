@@ -1,0 +1,38 @@
+{
+  "name": "fuelprices-aws",
+  "version": "0.1.0",
+  "bin": {
+    "fuelprices-aws": "bin/fuelprices-aws.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk",
+    "start-api": "cdk synth && sam local start-api -t ./cdk.out/FuelpricesAwsStack.template.json --env-vars env.json",
+    "trigger-fetch-event": "sam local generate-event cloudwatch scheduled-event | sam local invoke -t ./cdk.out/FuelpricesAwsStack.template.json --env-vars env.json -e - data-fetcher-handler",
+    "trigger-cache-event": "sam local generate-event s3 put --key=prices/Unleaded95 | sam local invoke -t ./cdk.out/FuelpricesAwsStack.template.json --env-vars env.json -e - cache-refresh-handler",
+    "localstack-start": "SERVICES=s3,dynamodb localstack start -d",
+    "localstack-stop": "localstack stop"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.93",
+    "@types/jest": "^26.0.10",
+    "@types/lodash": "^4.14.181",
+    "@types/node": "10.17.27",
+    "aws-cdk": "2.18.0",
+    "jest": "^26.4.2",
+    "ts-jest": "^26.5.6",
+    "ts-node": "^9.0.0",
+    "typescript": "~3.9.7"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.18.0",
+    "aws-lambda": "^1.0.7",
+    "constructs": "^10.0.0",
+    "date-fns": "^2.28.0",
+    "lodash": "^4.17.21",
+    "node-fetch": "^2.6.7",
+    "source-map-support": "^0.5.16"
+  }
+}
