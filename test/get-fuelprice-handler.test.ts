@@ -42,9 +42,13 @@ class FakePriceService implements IPriceService {
     );
   }
 
-  async updatePriceCache(fueltype: FuelType): Promise<void> {}
+  async updatePriceCache(fueltype: FuelType): Promise<void> {
+    throw new Error("not implemented");
+  }
 
-  async fetchPrices(fuelType: FuelType): Promise<void> {}
+  async fetchPrices(fuelType: FuelType): Promise<void> {
+    throw new Error("not implemented");
+  }
 }
 
 class NoDataPriceService implements IPriceService {
@@ -52,9 +56,13 @@ class NoDataPriceService implements IPriceService {
     return new Promise((resolve) => resolve(null));
   }
 
-  async updatePriceCache(fueltype: FuelType): Promise<void> {}
+  async updatePriceCache(fueltype: FuelType): Promise<void> {
+    throw new Error("not implemented");
+  }
 
-  async fetchPrices(fuelType: FuelType): Promise<void> {}
+  async fetchPrices(fuelType: FuelType): Promise<void> {
+    throw new Error("not implemented");
+  }
 }
 
 describe("Get fuelprice handler", () => {
