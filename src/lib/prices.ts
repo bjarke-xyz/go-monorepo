@@ -1,6 +1,6 @@
 import { isArray, chunk } from "lodash";
 const fetch = require("node-fetch");
-import { S3, DynamoDB } from "aws-sdk";
+import { S3, DynamoDB, SQS } from "aws-sdk";
 import { addDays, format, parse, subDays } from "date-fns";
 
 export type FuelType = "Unleaded95" | "Octane100" | "Diesel";
@@ -51,9 +51,11 @@ function dateDiffInDays(a: Date, b: Date) {
 export function createPriceService(): IPriceService {
   const bucketName = process.env.BUCKET || "";
   const tableName = process.env.TABLE_NAME || "";
+  const sqsUrl = process.env.SQS_URL || "";
   console.log("NODE_ENV -> ", process.env.NODE_ENV);
   console.log("BUCKET ->", bucketName);
   console.log("TABLE -> ", tableName);
+  console.log("SQSURL -> ", sqsUrl);
 
   const localhostEndpoint =
     process.env.NODE_ENV === "dev"
@@ -69,12 +71,20 @@ export function createPriceService(): IPriceService {
     endpoint: localhostEndpoint,
   });
 
-  return new PriceService(s3, bucketName, db, tableName);
+  const sqs = new SQS({
+    endpoint: localhostEndpoint,
+  });
+
+  return new PriceService(s3, bucketName, db, tableName, sqs, sqsUrl);
 }
 
 export interface IPriceService {
   getPrices: (date: Date, fuelType: FuelType) => Promise<DayPrices | null>;
   updatePriceCache: (fueltype: FuelType) => Promise<void>;
+  doCacheWrite: (
+    fueltype: FuelType,
+    priceChunk: OkPrices["historik"]
+  ) => Promise<void>;
   fetchPrices: (fuelType: FuelType) => Promise<void>;
 }
 export class PriceService implements IPriceService {
@@ -84,16 +94,24 @@ export class PriceService implements IPriceService {
   private readonly db: DynamoDB.DocumentClient;
   private readonly tableName: string;
 
+  private readonly sqs: SQS;
+  private readonly sqsUrl: string;
+
   constructor(
     s3: S3,
     s3Bucket: string,
     db: DynamoDB.DocumentClient,
-    tableName: string
+    tableName: string,
+    sqs: SQS,
+    sqsUrl: string
   ) {
     this.s3 = s3;
     this.s3Bucket = s3Bucket;
     this.db = db;
     this.tableName = tableName;
+
+    this.sqs = sqs;
+    this.sqsUrl = sqsUrl;
   }
   /**
    * Get price for the date requested, the day before, and the day after if possible
@@ -260,37 +278,52 @@ export class PriceService implements IPriceService {
 
     const priceChunks = chunk(toInsert.historik, 25);
 
-    // Instead of writing all ~250 chunks sequentially, they could be written to a SQS queue, and concurrently be written to DynamoDB
-    let chunkIndex = 0;
-    for (const priceChunk of priceChunks) {
-      const ddbItems = priceChunk.map((price) => {
-        return {
-          PutRequest: {
-            Item: {
-              PK: `FUELTYPE#${fueltype}`,
-              SK: `DATE#${price.dato}`,
-              price: price.pris,
-            },
+    const priceChunkBatches = chunk(priceChunks, 10);
+    priceChunkBatches.forEach(async (batch, i) => {
+      const entries: SQS.SendMessageBatchRequestEntryList = batch.map(
+        (priceChunk, j) => {
+          return {
+            Id: `${i}-${j}`,
+            MessageBody: JSON.stringify({
+              fueltype,
+              priceChunk,
+            }),
+          };
+        }
+      );
+      await this.sqs
+        .sendMessageBatch({
+          Entries: entries,
+          QueueUrl: this.sqsUrl,
+        })
+        .promise();
+    });
+  }
+
+  async doCacheWrite(fueltype: FuelType, priceChunk: OkPrices["historik"]) {
+    const ddbItems = priceChunk.map((price) => {
+      return {
+        PutRequest: {
+          Item: {
+            PK: `FUELTYPE#${fueltype}`,
+            SK: `DATE#${price.dato}`,
+            price: price.pris,
           },
-        };
-      });
+        },
+      };
+    });
 
-      try {
-        const resp = await this.db
-          .batchWrite({
-            RequestItems: {
-              [this.tableName]: ddbItems,
-            },
-          })
-          .promise();
-        console.log(`written chunk ${chunkIndex} of ${priceChunks.length}`);
-        chunkIndex++;
-      } catch (error) {
-        console.error(`error writing chunk ${chunkIndex} to dynamodb`, error);
-      }
+    try {
+      const resp = await this.db
+        .batchWrite({
+          RequestItems: {
+            [this.tableName]: ddbItems,
+          },
+        })
+        .promise();
+    } catch (error) {
+      console.error(`error writing chunk to dynamodb`, error);
     }
-
-    console.log(`${fueltype} DONE`);
   }
 
   async fetchPrices(fuelType: FuelType): Promise<void> {

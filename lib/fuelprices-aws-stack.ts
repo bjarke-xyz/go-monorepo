@@ -5,10 +5,14 @@ import { AttributeType, Table } from "aws-cdk-lib/aws-dynamodb";
 import { Rule, Schedule } from "aws-cdk-lib/aws-events";
 import { LambdaFunction } from "aws-cdk-lib/aws-events-targets";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
-import { S3EventSource } from "aws-cdk-lib/aws-lambda-event-sources";
+import {
+  S3EventSource,
+  SqsEventSource,
+} from "aws-cdk-lib/aws-lambda-event-sources";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import { EventType } from "aws-cdk-lib/aws-s3";
+import { Queue } from "aws-cdk-lib/aws-sqs";
 import { Construct } from "constructs";
 import * as path from "path";
 
@@ -32,6 +36,8 @@ export class FuelpricesAwsStack extends Stack {
       tableName: "prices",
       removalPolicy: RemovalPolicy.DESTROY,
     });
+
+    const queue = new Queue(this, "price-chunk-buffer");
 
     const getFuelpriceHandler = new NodejsFunction(
       this,
@@ -68,6 +74,7 @@ export class FuelpricesAwsStack extends Stack {
         environment: {
           BUCKET: bucket.bucketName,
           TABLE_NAME: dynamoTable.tableName,
+          SQS_URL: queue.queueUrl,
           NODE_ENV: "production",
         },
         bundling: {
@@ -78,6 +85,7 @@ export class FuelpricesAwsStack extends Stack {
     );
     bucket.grantRead(cacheRefreshHandler);
     dynamoTable.grantReadWriteData(cacheRefreshHandler);
+    queue.grantSendMessages(cacheRefreshHandler);
 
     const dataFetcherHandler = new NodejsFunction(
       this,
@@ -99,6 +107,25 @@ export class FuelpricesAwsStack extends Stack {
       }
     );
     bucket.grantReadWrite(dataFetcherHandler);
+
+    const cacheWriteHandler = new NodejsFunction(this, "cache-write-handler", {
+      memorySize: 128,
+      timeout: Duration.seconds(30),
+      runtime: Runtime.NODEJS_14_X,
+      handler: "main",
+      entry: path.join(__dirname, "../src/lambdas/cache-write-handler.ts"),
+      environment: {
+        TABLE_NAME: dynamoTable.tableName,
+        SQS_URL: queue.queueUrl,
+        NODE_ENV: "production",
+      },
+      bundling: {
+        minify: true,
+        externalModules: ["aws-sdk"],
+      },
+    });
+    queue.grantConsumeMessages(cacheWriteHandler);
+    dynamoTable.grantReadWriteData(cacheWriteHandler);
 
     const apiGateway = new apigateway.RestApi(this, "fuelprices-api", {
       restApiName: "Fuelprices API",
@@ -130,6 +157,8 @@ export class FuelpricesAwsStack extends Stack {
         events: [EventType.OBJECT_CREATED_PUT],
       })
     );
+
+    cacheWriteHandler.addEventSource(new SqsEventSource(queue));
 
     apiGateway.root.addMethod("GET", getFuelpriceIntegration, {});
   }
