@@ -35,6 +35,8 @@ export class FuelpricesAwsStack extends Stack {
       },
       tableName: "prices",
       removalPolicy: RemovalPolicy.DESTROY,
+      readCapacity: 4,
+      writeCapacity: 4,
     });
 
     const queue = new Queue(this, "price-chunk-buffer");
