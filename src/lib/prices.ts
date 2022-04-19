@@ -263,7 +263,7 @@ export class PriceService implements IPriceService {
     const toInsert: OkPrices = {
       historik: [],
     };
-    for (const item of priceResp.historik) {
+    for (const item of priceResp.historik.reverse()) {
       toInsert.historik.push(item);
       if (item.dato === firstDbItemDate) {
         break;
