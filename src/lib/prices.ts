@@ -264,10 +264,10 @@ export class PriceService implements IPriceService {
       historik: [],
     };
     for (const item of priceResp.historik.reverse()) {
-      toInsert.historik.push(item);
       if (item.dato === firstDbItemDate) {
         break;
       }
+      toInsert.historik.push(item);
     }
 
     console.log("toInsert length", toInsert.historik.length);
@@ -314,18 +314,28 @@ export class PriceService implements IPriceService {
     });
 
     console.log("doCacheWrite: ddbItems.length", ddbItems.length);
-    if (ddbItems.length > 0) {
-      console.log("doCacheWrite: ddbItems[0]", ddbItems[0]);
+    if (ddbItems.length < 20) {
+      console.log("doCacheWrite: ddbItems", JSON.stringify(ddbItems));
     }
 
     try {
       const resp = await this.db
-        .batchWrite({
-          RequestItems: {
-            [this.tableName]: ddbItems,
+        .batchWrite(
+          {
+            RequestItems: {
+              [this.tableName]: ddbItems,
+            },
           },
-        })
+          (err, data) => {
+            if (err) {
+              console.log("err callback", err);
+            }
+          }
+        )
         .promise();
+      if (resp.UnprocessedItems) {
+        console.log("UnprocessedItems", resp.UnprocessedItems);
+      }
     } catch (error) {
       console.error(`error writing chunk to dynamodb`, error);
     }
