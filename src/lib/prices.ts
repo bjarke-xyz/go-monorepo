@@ -313,6 +313,11 @@ export class PriceService implements IPriceService {
       };
     });
 
+    console.log("doCacheWrite: ddbItems.length", ddbItems.length);
+    if (ddbItems.length > 0) {
+      console.log("doCacheWrite: ddbItems[0]", ddbItems[0]);
+    }
+
     try {
       const resp = await this.db
         .batchWrite({
