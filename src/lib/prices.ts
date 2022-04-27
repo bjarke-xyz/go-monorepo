@@ -319,22 +319,32 @@ export class PriceService implements IPriceService {
     }
 
     try {
-      const resp = await this.db
-        .batchWrite(
-          {
+      if (ddbItems.length === 1) {
+        const resp = await this.db
+          .put({
+            TableName: this.tableName,
+            Item: ddbItems[0].PutRequest.Item,
+          })
+          .promise();
+        console.log("put success");
+      } else {
+        const resp = await this.db
+          .batchWrite({
             RequestItems: {
               [this.tableName]: ddbItems,
             },
-          },
-          (err, data) => {
-            if (err) {
-              console.log("err callback", err);
-            }
-          }
-        )
-        .promise();
-      if (resp.UnprocessedItems) {
-        console.log("UnprocessedItems", resp.UnprocessedItems);
+          })
+          .promise();
+        console.log("batchWrite success");
+        if (resp.UnprocessedItems) {
+          console.log("UnprocessedItems", resp.UnprocessedItems);
+        }
+        if (resp.ConsumedCapacity) {
+          console.log("ConsumedCapacity", resp.ConsumedCapacity);
+        }
+        if (resp.ItemCollectionMetrics) {
+          console.log("ItemCollectionMetrics", resp.ItemCollectionMetrics);
+        }
       }
     } catch (error) {
       console.error(`error writing chunk to dynamodb`, error);
