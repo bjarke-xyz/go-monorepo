@@ -10,6 +10,7 @@ import {
   SqsEventSource,
 } from "aws-cdk-lib/aws-lambda-event-sources";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
+import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import { EventType } from "aws-cdk-lib/aws-s3";
 import { Queue } from "aws-cdk-lib/aws-sqs";
@@ -59,6 +60,7 @@ export class FuelpricesAwsStack extends Stack {
           minify: true,
           externalModules: ["aws-sdk"],
         },
+        logRetention: RetentionDays.THREE_DAYS,
       }
     );
     bucket.grantRead(getFuelpriceHandler);
@@ -83,6 +85,7 @@ export class FuelpricesAwsStack extends Stack {
           minify: true,
           externalModules: ["aws-sdk"],
         },
+        logRetention: RetentionDays.THREE_DAYS,
       }
     );
     bucket.grantRead(cacheRefreshHandler);
@@ -106,6 +109,7 @@ export class FuelpricesAwsStack extends Stack {
           minify: true,
           externalModules: ["aws-sdk"],
         },
+        logRetention: RetentionDays.THREE_DAYS,
       }
     );
     bucket.grantReadWrite(dataFetcherHandler);
@@ -125,6 +129,7 @@ export class FuelpricesAwsStack extends Stack {
         minify: true,
         externalModules: ["aws-sdk"],
       },
+      logRetention: RetentionDays.THREE_DAYS,
     });
     queue.grantConsumeMessages(cacheWriteHandler);
     dynamoTable.grantReadWriteData(cacheWriteHandler);
