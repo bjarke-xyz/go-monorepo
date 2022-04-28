@@ -13,9 +13,9 @@ export async function main(event: SQSEvent, context: Context): Promise<any> {
   event.Records.forEach((record) => {
     items.push(JSON.parse(record.body));
   });
-  items.forEach(async (item) => {
+  for (let item of items) {
     await priceService.doCacheWrite(item.fueltype, item.priceChunk);
-  });
+  }
   return {
     body: "",
     statusCode: 200,
