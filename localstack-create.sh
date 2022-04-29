@@ -13,3 +13,6 @@ aws --endpoint-url=http://localhost:4566 dynamodb create-table --table-name pric
         AttributeName=SK,KeyType=RANGE \
     --provisioned-throughput ReadCapacityUnits=10,WriteCapacityUnits=5 \
     --region eu-north-1
+
+# SQS
+aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name pricechunkbufferC2C7EB62

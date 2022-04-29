@@ -12,7 +12,8 @@
     "start-api": "cdk synth && sam local start-api -t ./cdk.out/FuelpricesAwsStack.template.json --env-vars env.json",
     "trigger-fetch-event": "sam local generate-event cloudwatch scheduled-event | sam local invoke -t ./cdk.out/FuelpricesAwsStack.template.json --env-vars env.json -e - data-fetcher-handler",
     "trigger-cache-event": "sam local generate-event s3 put --key=prices/Unleaded95 | sam local invoke -t ./cdk.out/FuelpricesAwsStack.template.json --env-vars env.json -e - cache-refresh-handler",
-    "localstack-start": "SERVICES=s3,dynamodb localstack start -d",
+    "trigger-cache-write-event": "sam local generate-event sqs receive-message --body $(cat cache-write-event-body.txt)  | sam local invoke -t ./cdk.out/FuelpricesAwsStack.template.json --env-vars env.json -e - cache-write-handler",
+    "localstack-start": "SERVICES=s3,dynamodb,sqs localstack start -d",
     "localstack-stop": "localstack stop"
   },
   "devDependencies": {
