@@ -24,3 +24,9 @@ jobs:
         run: npm run cdk synth
       - name: Deploy stack
         run: npm run cdk deploy -- --all --require-approval never
+      - name: Notify on success
+        uses: Ilshidur/action-discord@0.3.2
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: "🚀 {{ EVENT_PAYLOAD.repository.full_name }} has been released. <https://github.com/${{ github.repository }}/>"
