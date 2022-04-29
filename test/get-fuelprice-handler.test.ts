@@ -6,6 +6,7 @@ import { DayPrices, FuelType, IPriceService } from "../src/lib/prices";
 interface LambdaResponse {
   statusCode: number;
   body: string;
+  headers: Record<string, any>;
 }
 
 class FakePriceService implements IPriceService {
@@ -49,6 +50,13 @@ class FakePriceService implements IPriceService {
   async fetchPrices(fuelType: FuelType): Promise<void> {
     throw new Error("not implemented");
   }
+
+  async doCacheWrite(
+    fueltype: prices.FuelType,
+    priceChunk: prices.OkPrices["historik"]
+  ): Promise<void> {
+    throw new Error("not implemented");
+  }
 }
 
 class NoDataPriceService implements IPriceService {
@@ -63,14 +71,29 @@ class NoDataPriceService implements IPriceService {
   async fetchPrices(fuelType: FuelType): Promise<void> {
     throw new Error("not implemented");
   }
+
+  async doCacheWrite(
+    fueltype: prices.FuelType,
+    priceChunk: prices.OkPrices["historik"]
+  ): Promise<void> {
+    throw new Error("not implemented");
+  }
 }
 
 describe("Get fuelprice handler", () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
   test("Should return same price response", async () => {
     jest
       .spyOn(prices, "createPriceService")
       .mockReturnValue(new FakePriceService(1));
-    const event: APIGatewayProxyEventV2 = {} as any;
+    const event: APIGatewayProxyEventV2 = {
+      queryStringParameters: {
+        nocache: "true",
+      },
+    } as any;
     const response = (await main(event)) as LambdaResponse;
     expect(response.statusCode).toEqual(200);
     const body = response.body as string;
@@ -82,7 +105,11 @@ describe("Get fuelprice handler", () => {
     jest
       .spyOn(prices, "createPriceService")
       .mockReturnValue(new FakePriceService(10, 9));
-    const event: APIGatewayProxyEventV2 = {} as any;
+    const event: APIGatewayProxyEventV2 = {
+      queryStringParameters: {
+        nocache: "true",
+      },
+    } as any;
     const response = (await main(event)) as LambdaResponse;
     expect(response.statusCode).toEqual(200);
     const body = response.body as string;
@@ -92,8 +119,12 @@ describe("Get fuelprice handler", () => {
   test("More expensive yesterday prices", async () => {
     jest
       .spyOn(prices, "createPriceService")
-      .mockReturnValue(new FakePriceService(10, 11));
-    const event: APIGatewayProxyEventV2 = {} as any;
+      .mockReturnValue(new FakePriceService(10, 11, 9));
+    const event: APIGatewayProxyEventV2 = {
+      queryStringParameters: {
+        nocache: "true",
+      },
+    } as any;
     const response = (await main(event)) as LambdaResponse;
     expect(response.statusCode).toEqual(200);
     const body = response.body as string;
@@ -104,10 +135,39 @@ describe("Get fuelprice handler", () => {
     jest
       .spyOn(prices, "createPriceService")
       .mockReturnValue(new NoDataPriceService());
-    const event: APIGatewayProxyEventV2 = {} as any;
+    const event: APIGatewayProxyEventV2 = {
+      queryStringParameters: {
+        nocache: "true",
+      },
+    } as any;
     const response = (await main(event)) as LambdaResponse;
     expect(response.statusCode).toEqual(404);
     const body = response.body as string;
     expect(body).toContain("No prices were found");
+  });
+
+  test("cache hit", async () => {
+    jest
+      .spyOn(prices, "createPriceService")
+      .mockReturnValue(new NoDataPriceService());
+
+    const event: APIGatewayProxyEventV2 = {
+      queryStringParameters: {
+        // Date must be specified so cache key is consistent
+        // Otherwise it may differ between requests
+        now: "2022-01-01",
+      },
+    } as any;
+
+    const response = (await main(event)) as LambdaResponse;
+    expect(response.statusCode).toEqual(404);
+    const body = response.body as string;
+    expect(body).toContain("No prices were found");
+    expect(response.headers["x-b.xyz-cache"]).toEqual("miss");
+
+    const nextResp = (await main(event)) as LambdaResponse;
+    expect(nextResp.statusCode).toEqual(response.statusCode);
+    expect(nextResp.body).toEqual(response.body);
+    expect(nextResp.headers["x-b.xyz-cache"]).toEqual("hit");
   });
 });

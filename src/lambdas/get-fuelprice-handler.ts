@@ -1,4 +1,5 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
+import { format } from "date-fns";
 import { Cache } from "../lib/cache";
 import { getErrorText, getText, Language } from "../lib/localization";
 import { createPriceService, FuelType } from "../lib/prices";
@@ -11,13 +12,18 @@ export async function main(
   console.log("event -> ", event);
   const priceService = createPriceService();
 
-  const { date, fuelType, language } = parseArguments(event);
+  const { date, fuelType, language, noCache } = parseArguments(event);
 
-  const cacheKey = `${date.toISOString()}:${fuelType}:${language}`;
+  const cacheKey = `${format(date, "yyyy-MM-dd")}:${fuelType}:${language}`;
   const cached = cache.get(cacheKey);
-  if (cached) {
+  if (!noCache && cached) {
     console.log("cache hit");
-    return cached;
+    return {
+      ...cached,
+      headers: {
+        "x-b.xyz-cache": "hit",
+      },
+    };
   }
 
   try {
@@ -30,7 +36,12 @@ export async function main(
         statusCode: 404,
       };
       cache.insert(cacheKey, val);
-      return val;
+      return {
+        ...val,
+        headers: {
+          "x-b.xyz-cache": "miss",
+        },
+      };
     }
     const responseObj = {
       message: getText(value, fuelType, language),
@@ -41,7 +52,12 @@ export async function main(
       statusCode: 200,
     };
     cache.insert(cacheKey, val);
-    return val;
+    return {
+      ...val,
+      headers: {
+        "x-b.xyz-cache": "miss",
+      },
+    };
   } catch (error) {
     console.log("error getting prices", error);
     return {
@@ -57,6 +73,7 @@ function parseArguments(event: APIGatewayProxyEventV2): {
   date: Date;
   fuelType: FuelType;
   language: Language;
+  noCache: boolean;
 } {
   const date = parseDate(event.queryStringParameters?.["now"]);
   const fuelType = parseFuelType(
@@ -64,12 +81,29 @@ function parseArguments(event: APIGatewayProxyEventV2): {
       event.queryStringParameters?.["fueltype"]
   );
   const language = parseLanguage(event.queryStringParameters?.["lang"]);
+  const noCache = parseNoCache(
+    event.queryStringParameters?.["nocache"] ??
+      event.queryStringParameters?.["noCache"]
+  );
 
   return {
     date,
     fuelType,
     language,
+    noCache,
   };
+}
+
+function parseNoCache(noCacheStr: string | null | undefined): boolean {
+  let noCache = false;
+  if (noCacheStr) {
+    if (noCacheStr.toLowerCase() == "false") {
+      noCache = false;
+    } else {
+      noCache = true;
+    }
+  }
+  return noCache;
 }
 
 function parseDate(dateStr: string | null | undefined): Date {
