@@ -4,8 +4,30 @@ on:
       - main
 
 jobs:
-  aws_cdk:
+  test:
     runs-on: ubuntu-latest
+    name: Test
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14
+      - run: npm install
+      - run: npm test
+        id: test
+      - name: Notify on error
+        uses: Ilshidur/action-discord@0.3.2
+        if: failure() && steps.test.outcome == 'failure'
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: "⚠️ {{ EVENT_PAYLOAD.repository.full_name }} tests failed. <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}>"
+
+
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy
+    needs: test
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -23,10 +45,20 @@ jobs:
       - name: Synth stack
         run: npm run cdk synth
       - name: Deploy stack
+        id: deploy
         run: npm run cdk deploy -- --all --require-approval never
+      - name: Notify on error
+        uses: Ilshidur/action-discord@0.3.2
+        if: failure() && steps.deploy.outcome == 'failure'
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: "⚠️ {{ EVENT_PAYLOAD.repository.full_name }} failed to release. <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}>"
       - name: Notify on success
         uses: Ilshidur/action-discord@0.3.2
+        if: success() && steps.deploy.outcome == 'success'
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
           args: "🚀 {{ EVENT_PAYLOAD.repository.full_name }} has been released. <https://github.com/${{ github.repository }}/>"
+
