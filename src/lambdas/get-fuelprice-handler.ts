@@ -1,6 +1,9 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
+import { Cache } from "../lib/cache";
 import { getErrorText, getText, Language } from "../lib/localization";
 import { createPriceService, FuelType } from "../lib/prices";
+
+const cache = new Cache<{ body: string; statusCode: number }>();
 
 export async function main(
   event: APIGatewayProxyEventV2
@@ -10,24 +13,35 @@ export async function main(
 
   const { date, fuelType, language } = parseArguments(event);
 
+  const cacheKey = `${date.toISOString()}:${fuelType}:${language}`;
+  const cached = cache.get(cacheKey);
+  if (cached) {
+    console.log("cache hit");
+    return cached;
+  }
+
   try {
     const value = await priceService.getPrices(date, fuelType);
     if (!value) {
-      return {
+      const val = {
         body: JSON.stringify({
           message: getErrorText(language),
         }),
         statusCode: 404,
       };
+      cache.insert(cacheKey, val);
+      return val;
     }
     const responseObj = {
       message: getText(value, fuelType, language),
       prices: [value],
     };
-    return {
+    const val = {
       body: JSON.stringify(responseObj),
       statusCode: 200,
     };
+    cache.insert(cacheKey, val);
+    return val;
   } catch (error) {
     console.log("error getting prices", error);
     return {
