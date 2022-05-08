@@ -140,8 +140,8 @@ export class FuelpricesAwsStack extends Stack {
       domainName: {
         certificate: Certificate.fromCertificateArn(
           this,
-          "df0ce0af-7bc4-4d78-b583-3e43b947e842",
-          "arn:aws:acm:eu-north-1:573355056124:certificate/df0ce0af-7bc4-4d78-b583-3e43b947e842"
+          "5762008f-3e14-4222-abe5-265102d39eb8",
+          "arn:aws:acm:eu-north-1:573355056124:certificate/5762008f-3e14-4222-abe5-265102d39eb8"
         ),
         domainName: "fuelprices.bjarke.xyz",
       },
