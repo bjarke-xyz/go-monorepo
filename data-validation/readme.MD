@@ -1,1 +1,0 @@
-Quick script to validate that all data has been inserted into the database
