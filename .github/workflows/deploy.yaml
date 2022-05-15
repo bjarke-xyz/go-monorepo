@@ -1,0 +1,42 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy
+    #needs: test
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+      - run: npm install
+      - uses: cloudflare/wrangler-action@2.0.0
+        name: Publish
+        id: publish
+        with:
+          apiToken: ${{ secrets.CF_WORKER_TOKEN }}
+          environment: 'production'
+          command: 'publish src/index.ts'
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+      - name: Notify on error
+        uses: Ilshidur/action-discord@0.3.2
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: "⚠️ {{ EVENT_PAYLOAD.repository.full_name }} failed to release. <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}>"
+      - name: Notify on success
+        uses: Ilshidur/action-discord@0.3.2
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: "🚀 {{ EVENT_PAYLOAD.repository.full_name }} has been released. <https://github.com/${{ github.repository }}/>"
+

@@ -1,0 +1,12 @@
+name = "fuelprices"
+main = "src/index.ts"
+compatibility_date = "2022-05-15"
+
+kv_namespaces = [
+    { binding = "KV_FUELPRICES", id = "9aff6c27ff5047e68c2c65ef87560304", preview_id = "94521be1355144d1af9a05ace52f2be7" }
+]
+
+[[r2_buckets]]
+binding = "R2_FUELPRICES"
+bucket_name = "fuelprices"
+preview_bucket_name = "preview-fuelprices"
