@@ -10,3 +10,6 @@ kv_namespaces = [
 binding = "R2_FUELPRICES"
 bucket_name = "fuelprices"
 preview_bucket_name = "preview-fuelprices"
+
+[triggers]
+crons = ["0 */1 * * *"]
