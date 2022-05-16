@@ -107,15 +107,22 @@ export class PriceRepository {
     if (object) {
       const json = await object.json<OkPrices>();
       const prices = json["historik"];
+      const expirationTtlSeconds = 1 * 60 * 60; // 3600s, 1h
       await this.env.KV_FUELPRICES.put(
         getKvKey(fuelType, "archive"),
-        JSON.stringify(prices)
+        JSON.stringify(prices),
+        {
+          expirationTtl: expirationTtlSeconds,
+        }
       );
 
       const recentPrices = take(reverse(prices), 33);
       await this.env.KV_FUELPRICES.put(
         getKvKey(fuelType, "recent"),
-        JSON.stringify(recentPrices)
+        JSON.stringify(recentPrices),
+        {
+          expirationTtl: expirationTtlSeconds,
+        }
       );
     }
   }
@@ -158,7 +165,5 @@ export class PriceRepository {
       getR2Key(fuelType),
       JSON.stringify(priceResp)
     );
-    await this.env.KV_FUELPRICES.delete(getKvKey(fuelType, "archive"));
-    await this.env.KV_FUELPRICES.delete(getKvKey(fuelType, "recent"));
   }
 }
