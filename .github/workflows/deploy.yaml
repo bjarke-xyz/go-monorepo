@@ -42,23 +42,26 @@ jobs:
         id: publish
         with:
           apiToken: ${{ secrets.CF_WORKER_TOKEN }}
-          environment: 'production'
-          command: 'publish src/index.ts'
+          environment: "production"
+          command: "publish src/index.ts"
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           CLOUDFLARE_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
       - name: Notify on error
-        uses: Ilshidur/action-discord@0.3.2
+        uses: fjogeleit/http-request-action@v1
         if: failure() && steps.publish.outcome == 'failure'
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          args: "⚠️ {{ EVENT_PAYLOAD.repository.full_name }} failed to release. <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}>"
+          url: "${{ secrets.NOTIFICATIONS_URL }}"
+          method: "POST"
+          username: "${{ secrets.NOTIFICATIONS_USERNAME }}"
+          password: "${{ secrets.NOTIFICATIONS_PASSWORD }}"
+          data: '{ "channels": ["discord", "email"], "message": { "message": "⚠️ ${{ github.repository }} failed to release. <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}>" } }'
       - name: Notify on success
-        uses: Ilshidur/action-discord@0.3.2
+        uses: fjogeleit/http-request-action@v1
         if: success() && steps.publish.outcome == 'success'
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          args: "🚀 {{ EVENT_PAYLOAD.repository.full_name }} has been released. <https://github.com/${{ github.repository }}/>"
-
+          url: "${{ secrets.NOTIFICATIONS_URL }}"
+          method: "POST"
+          username: "${{ secrets.NOTIFICATIONS_USERNAME }}"
+          password: "${{ secrets.NOTIFICATIONS_PASSWORD }}"
+          data: '{ "channels": ["discord", "email"], "message": { "message": "🚀 ${{ github.repository }} has been released. <https://github.com/${{ github.repository }}/>" } }'
