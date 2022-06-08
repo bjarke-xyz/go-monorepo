@@ -124,3 +124,17 @@ export async function fetchData(
   context.waitUntil(Promise.all(promises));
   return new Response("OK");
 }
+
+export async function updateData(
+  request: IttyRequest | ScheduledEvent,
+  context: EventContext<any, any, any>,
+  priceRepository: PriceRepository
+): Promise<Response> {
+  const promises = [
+    priceRepository.updateKv("Unleaded95"),
+    priceRepository.updateKv("Diesel"),
+    priceRepository.updateKv("Octane100"),
+  ];
+  context.waitUntil(Promise.all(promises));
+  return new Response("OK");
+}

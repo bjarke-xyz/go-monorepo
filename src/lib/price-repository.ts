@@ -4,7 +4,7 @@ import {
   hoursToMilliseconds,
   subDays,
 } from "date-fns";
-import { reverse, take } from "lodash";
+import _, { groupBy, isArray, isNil, reverse, take } from "lodash";
 import { WorkerEnv } from "../types";
 import {
   DayPrices,
@@ -76,6 +76,7 @@ export class PriceRepository {
       today: {
         date: todayOkPrice.dato,
         price: todayOkPrice.pris,
+        prevPrices: todayOkPrice.prevPrices ?? [],
       },
       tomorrow: null,
       yesterday: null,
@@ -87,6 +88,7 @@ export class PriceRepository {
       prices.yesterday = {
         date: yesterdayOkPrice.dato,
         price: yesterdayOkPrice.pris,
+        prevPrices: yesterdayOkPrice.prevPrices ?? [],
       };
     }
 
@@ -96,6 +98,7 @@ export class PriceRepository {
       prices.tomorrow = {
         date: tomorrowOkPrice.dato,
         price: tomorrowOkPrice.pris,
+        prevPrices: tomorrowOkPrice.prevPrices ?? [],
       };
     }
 
@@ -105,9 +108,9 @@ export class PriceRepository {
   async updateKv(fuelType: FuelType): Promise<void> {
     const object = await this.env.R2_FUELPRICES.get(getR2Key(fuelType));
     if (object) {
-      const json = await object.json<OkPrices>();
-      const prices = json["historik"];
-      const expirationTtlSeconds = 1 * 60 * 60; // 3600s, 1h
+      const okPrices = await object.json<OkPrices>();
+      const prices = okPrices["historik"];
+      const expirationTtlSeconds = 1 * 60 * 62; // 3720s, 1h and 2 min
       await this.env.KV_FUELPRICES.put(
         getKvKey(fuelType, "archive"),
         JSON.stringify(prices),
@@ -116,7 +119,32 @@ export class PriceRepository {
         }
       );
 
+      const dbRecent = await this.env.KV_FUELPRICES.get<OkPrices["historik"]>(
+        getKvKey(fuelType, "recent"),
+        "json"
+      );
+
       const recentPrices = take(reverse(prices), 33);
+      const recentPricesByDate = groupBy(recentPrices, (x) => x.dato);
+
+      if (dbRecent && isArray(dbRecent)) {
+        for (const dbPrice of dbRecent) {
+          const recentPrice = recentPricesByDate[dbPrice.dato]?.[0];
+          if (recentPrice && recentPrice.pris !== dbPrice.pris) {
+            if (!recentPrice.prevPrices) {
+              recentPrice.prevPrices = [];
+            }
+            if (dbPrice.prevPrices && dbPrice.prevPrices.length > 0) {
+              recentPrice.prevPrices = [...dbPrice.prevPrices];
+            }
+            recentPrice.prevPrices.push({
+              detectionTimestamp: new Date().toISOString(),
+              price: dbPrice.pris,
+            });
+          }
+        }
+      }
+
       await this.env.KV_FUELPRICES.put(
         getKvKey(fuelType, "recent"),
         JSON.stringify(recentPrices),

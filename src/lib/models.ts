@@ -12,10 +12,16 @@ export function fuelTypeToOkItemNumber(fuelType: FuelType): number {
   }
 }
 
+export interface PreviousPrice {
+  detectionTimestamp: string;
+  price: number;
+}
+
 export interface OkPrices {
   historik: {
     dato: string;
     pris: number;
+    prevPrices?: PreviousPrice[];
     prisExclAfgifterExclMoms?: number;
     prisExclAfgifterInclMoms?: number;
     prisExclMoms?: number;
@@ -26,6 +32,7 @@ export interface OkPrices {
 export interface Price {
   date: string;
   price: number;
+  prevPrices: PreviousPrice[];
 }
 
 export interface DayPrices {

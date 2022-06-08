@@ -9,7 +9,7 @@
  */
 
 import { Router } from "itty-router";
-import { fetchData, getPrices } from "./handlers/prices";
+import { fetchData, getPrices, updateData } from "./handlers/prices";
 import { PriceRepository } from "./lib/price-repository";
 import { IttyRequest, WorkerEnv } from "./types";
 
@@ -26,6 +26,12 @@ router.get(
 //     fetchData(req, context, new PriceRepository(env))
 // );
 
+// router.post(
+//   "/prices/update",
+//   (req: IttyRequest, env: WorkerEnv, context: EventContext<any, any, any>) =>
+//     updateData(req, context, new PriceRepository(env))
+// );
+
 router.all("*", () => new Response("Not found", { status: 404 }));
 export default {
   fetch: router.handle,
@@ -35,5 +41,6 @@ export default {
     context: EventContext<any, any, any>
   ) {
     fetchData(event, context, new PriceRepository(env));
+    updateData(event, context, new PriceRepository(env));
   },
 };
