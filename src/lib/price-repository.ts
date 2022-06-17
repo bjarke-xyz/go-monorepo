@@ -130,17 +130,19 @@ export class PriceRepository {
       if (dbRecent && isArray(dbRecent)) {
         for (const dbPrice of dbRecent) {
           const recentPrice = recentPricesByDate[dbPrice.dato]?.[0];
-          if (recentPrice && recentPrice.pris !== dbPrice.pris) {
+          if (recentPrice) {
             if (!recentPrice.prevPrices) {
               recentPrice.prevPrices = [];
             }
             if (dbPrice.prevPrices && dbPrice.prevPrices.length > 0) {
               recentPrice.prevPrices = [...dbPrice.prevPrices];
             }
-            recentPrice.prevPrices.push({
-              detectionTimestamp: new Date().toISOString(),
-              price: dbPrice.pris,
-            });
+            if (recentPrice.pris !== dbPrice.pris) {
+              recentPrice.prevPrices.push({
+                detectionTimestamp: new Date().toISOString(),
+                price: dbPrice.pris,
+              });
+            }
           }
         }
       }
