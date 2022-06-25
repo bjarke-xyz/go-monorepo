@@ -1,8 +1,43 @@
-import { parse } from "date-fns";
+import { format, parse, parseISO, subDays } from "date-fns";
 import { getErrorText, getText, Language } from "../lib/localization";
 import { FuelType } from "../lib/models";
 import { PriceRepository } from "../lib/price-repository";
 import { IttyRequest } from "../types";
+
+export async function getAllPrices(
+  request: IttyRequest,
+  context: EventContext<any, any, any>,
+  priceRepository: PriceRepository
+): Promise<Response> {
+  const cacheUrl = new URL(request.url);
+  const cacheKey = new Request(cacheUrl.toString(), request);
+  const cache = caches.default;
+
+  let response = await cache.match(cacheKey);
+  if (!response) {
+    const formatStr = "yyyy-MM-dd";
+    const now = new Date();
+    const fromStr =
+      request.query?.["from"] ?? format(subDays(now, 365), formatStr);
+    const toStr = request.query?.["to"] ?? format(now, formatStr);
+    const fuelType = parseFuelType(request.query?.["type"]);
+    const refDate = new Date();
+    const from = parse(fromStr, formatStr, refDate);
+    const to = parse(toStr, formatStr, refDate);
+    const prices = await priceRepository.getAllPrices(fuelType, from, to);
+
+    response = new Response(JSON.stringify(prices), {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    response.headers.append("Cache-Control", "s-maxage=900");
+    response.headers.append("Access-Control-Allow-Origin", "*");
+    context.waitUntil(cache.put(cacheKey, response.clone()));
+  }
+  return response;
+}
 
 export async function getPrices(
   request: IttyRequest,

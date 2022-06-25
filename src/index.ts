@@ -9,15 +9,26 @@
  */
 
 import { Router } from "itty-router";
-import { fetchData, getPrices, updateData } from "./handlers/prices";
+import {
+  fetchData,
+  getAllPrices,
+  getPrices,
+  updateData,
+} from "./handlers/prices";
 import { PriceRepository } from "./lib/price-repository";
 import { IttyRequest, WorkerEnv } from "./types";
 
 const router = Router();
 router.get(
-  "/",
+  "/prices",
   (req: IttyRequest, env: WorkerEnv, context: EventContext<any, any, any>) =>
     getPrices(req, context, new PriceRepository(env))
+);
+
+router.get(
+  "/prices/all",
+  (req: IttyRequest, env: WorkerEnv, context: EventContext<any, any, any>) =>
+    getAllPrices(req, context, new PriceRepository(env))
 );
 
 // router.post(

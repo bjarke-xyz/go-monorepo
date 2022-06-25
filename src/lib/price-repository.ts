@@ -1,7 +1,11 @@
 import {
   addDays,
   differenceInDays,
+  format,
   hoursToMilliseconds,
+  isAfter,
+  isBefore,
+  parse,
   subDays,
 } from "date-fns";
 import _, { groupBy, isArray, isNil, reverse, take } from "lodash";
@@ -25,6 +29,37 @@ function getR2Key(fuelType: FuelType) {
 
 export class PriceRepository {
   constructor(private readonly env: WorkerEnv) {}
+
+  async getAllPrices(
+    fueltype: FuelType,
+    from: Date,
+    to: Date
+  ): Promise<OkPrices["historik"]> {
+    const archive = await this.env.KV_FUELPRICES.get<OkPrices["historik"]>(
+      getKvKey(fueltype, "archive"),
+      "json"
+    );
+    if (!archive) {
+      return [];
+    }
+
+    const refDate = new Date(0);
+    const fromStr = format(from, "yyyy-MM-dd");
+    const toStr = format(to, "yyyy-MM-dd");
+
+    const filtered = archive.filter((item) => {
+      // 2022-06-25T00:00:00
+      const date = parse(item.dato, "yyyy-MM-dd'T'HH:mm:ss", refDate);
+      const dateStr = format(date, "yyyy-MM-dd");
+      return (
+        (isAfter(date, from) && isBefore(date, to)) ||
+        dateStr === fromStr ||
+        dateStr === toStr
+      );
+    });
+
+    return filtered;
+  }
 
   async getPrices(fuelType: FuelType, date: Date): Promise<DayPrices | null> {
     const now = new Date();
