@@ -48,23 +48,23 @@ export class PriceRepository {
     const fromStr = format(from, "yyyy-MM-dd");
     const toStr = format(to, "yyyy-MM-dd");
 
-    const filtered = archive.filter((item) => {
-      // 2022-06-25T00:00:00
+    const translatedAndFiltered: OkPriceTranslated[] = [];
+    for (const item of archive) {
       const date = parse(item.dato, "yyyy-MM-dd'T'HH:mm:ss", refDate);
       const dateStr = format(date, "yyyy-MM-dd");
-      return (
+      if (
         (isAfter(date, from) && isBefore(date, to)) ||
         dateStr === fromStr ||
         dateStr === toStr
-      );
-    });
-
-    const translated: OkPriceTranslated[] = filtered.map((item) => ({
-      date: item.dato,
-      price: item.pris,
-    }));
-
-    return translated;
+      ) {
+        const translatedItem: OkPriceTranslated = {
+          date: item.dato,
+          price: item.pris,
+        };
+        translatedAndFiltered.push(translatedItem);
+      }
+    }
+    return translatedAndFiltered;
   }
 
   async getPrices(fuelType: FuelType, date: Date): Promise<DayPrices | null> {
