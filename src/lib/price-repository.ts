@@ -15,6 +15,7 @@ import {
   FuelType,
   fuelTypeToOkItemNumber,
   OkPrices,
+  OkPriceTranslated,
 } from "./models";
 
 type KvKey = "recent" | "archive";
@@ -34,7 +35,7 @@ export class PriceRepository {
     fueltype: FuelType,
     from: Date,
     to: Date
-  ): Promise<OkPrices["historik"]> {
+  ): Promise<OkPriceTranslated[]> {
     const archive = await this.env.KV_FUELPRICES.get<OkPrices["historik"]>(
       getKvKey(fueltype, "archive"),
       "json"
@@ -58,7 +59,12 @@ export class PriceRepository {
       );
     });
 
-    return filtered;
+    const translated: OkPriceTranslated[] = filtered.map((item) => ({
+      date: item.dato,
+      price: item.pris,
+    }));
+
+    return translated;
   }
 
   async getPrices(fuelType: FuelType, date: Date): Promise<DayPrices | null> {

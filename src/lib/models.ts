@@ -29,6 +29,11 @@ export interface OkPrices {
   }[];
 }
 
+export interface OkPriceTranslated {
+  date: string;
+  price: number;
+}
+
 export interface Price {
   date: string;
   price: number;
