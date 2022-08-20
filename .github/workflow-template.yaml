@@ -1,4 +1,4 @@
-# Template variables: 
+# Template variables:
 # SERVICE -> {{SERVICE}}
 
 name: "{{SERVICE}}"
@@ -31,7 +31,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: ./Dockerfile
+          file: ./services/{{SERVICE}}/Dockerfile
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           tags: "${{ secrets.REGISTRY_URL }}/{{SERVICE}}"

@@ -1,4 +1,4 @@
-# Template variables: 
+# Template variables:
 # SERVICE -> fuelpricesapi
 
 name: "fuelpricesapi"
@@ -31,7 +31,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: ./Dockerfile
+          file: ./services/fuelpricesapi/Dockerfile
           builder: ${{ steps.buildx.outputs.name }}
           push: true
           tags: "${{ secrets.REGISTRY_URL }}/fuelpricesapi"
