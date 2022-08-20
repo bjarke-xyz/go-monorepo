@@ -33,10 +33,12 @@ func main() {
 	go appContext.JobManager.Start()
 
 	httpHandler := NewHttpHandler(appContext)
+	r := gin.Default()
 	if config.AppEnv == AppEnvProduction {
 		gin.SetMode(gin.ReleaseMode)
+		r.TrustedPlatform = gin.PlatformCloudflare
+		r.SetTrustedProxies(nil)
 	}
-	r := gin.Default()
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status": "ok",
