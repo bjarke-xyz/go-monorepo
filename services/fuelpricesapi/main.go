@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -36,6 +37,11 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	r := gin.Default()
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status": "ok",
+		})
+	})
 	r.GET("/prices", httpHandler.GetPrices)
 	r.GET("/prices/all", httpHandler.GetAllPrices)
 	r.POST("/job", httpHandler.RunJob(config.JobKey))
