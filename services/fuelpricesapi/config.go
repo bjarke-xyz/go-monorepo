@@ -36,6 +36,7 @@ func (c *Config) ConnectionString() string {
 func NewConfig() (*Config, error) {
 	err := godotenv.Load()
 	if err != nil {
+		err := godotenv.Load("/run/secrets/fuelpricesapi_env")
 		return nil, fmt.Errorf("failed to load env: %w", err)
 	}
 	appEnv := os.Getenv("APP_ENV")
