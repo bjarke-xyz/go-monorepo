@@ -55,7 +55,7 @@ jobs:
           username: ${{ secrets.SSH_DEPLOYMENT_USERNAME }}
           host: ${{ secrets.SSH_DEPLOYMENT_HOST }}
           key: ${{ secrets.SSH_DEPLOYMENT_KEY }}
-          script: ${{ secrets.SSH_DEPLOYMENT_SCRIPT_SWARM }} ${{ github.repository }}/services/{{SERVICE}} {{SERVICE}}
+          script: ${{ secrets.SSH_DEPLOYMENT_SCRIPT_SWARM }} ${{ github.repository }}/services/{{SERVICE}} {{SERVICE}} ${{ github.repository }}
       - name: Notify on error
         uses: fjogeleit/http-request-action@v1
         if: failure() && steps.ssh.outcome == 'failure'
