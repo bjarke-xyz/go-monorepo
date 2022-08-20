@@ -1,4 +1,6 @@
-# Template variables: SERVICE
+# Template variables: 
+# SERVICE -> fuelpricesapi
+
 name: "fuelpricesapi"
 
 on:

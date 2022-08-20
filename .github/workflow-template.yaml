@@ -1,4 +1,6 @@
-# Template variables: SERVICE
+# Template variables: 
+# SERVICE -> {{SERVICE}}
+
 name: "{{SERVICE}}"
 
 on:
