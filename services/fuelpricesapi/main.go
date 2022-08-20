@@ -33,9 +33,12 @@ func main() {
 	go appContext.JobManager.Start()
 
 	httpHandler := NewHttpHandler(appContext)
+	if config.AppEnv == AppEnvProduction {
+		// Must be called before initializing the gin router
+		gin.SetMode(gin.ReleaseMode)
+	}
 	r := gin.Default()
 	if config.AppEnv == AppEnvProduction {
-		gin.SetMode(gin.ReleaseMode)
 		r.TrustedPlatform = gin.PlatformCloudflare
 		r.SetTrustedProxies(nil)
 	}
