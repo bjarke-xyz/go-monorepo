@@ -75,4 +75,4 @@ jobs:
           method: "POST"
           username: "${{ secrets.NOTIFICATIONS_USERNAME }}"
           password: "${{ secrets.NOTIFICATIONS_PASSWORD }}"
-          data: '{ "channels": ["discord", "email"], "message": { "message": "🚀 ${{SERVICE}} has been released. <https://github.com/${{ github.repository }}/>" } }'
+          data: '{ "channels": ["discord", "email"], "message": { "message": "🚀 {{SERVICE}} has been released. <https://github.com/${{ github.repository }}/>" } }'
