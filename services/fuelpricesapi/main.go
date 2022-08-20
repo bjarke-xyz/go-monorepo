@@ -15,7 +15,7 @@ func main() {
 		log.Printf("failed to load env: %v", err)
 	}
 
-	err = Migrate("up", config.GetDbConnectionString())
+	err = Migrate("up", config.ConnectionString())
 	if err != nil {
 		log.Printf("failed to migrate: %v", err)
 	}

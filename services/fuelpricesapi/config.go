@@ -28,7 +28,7 @@ const (
 	AppEnvProduction  = "production"
 )
 
-func (c *Config) GetDbConnectionString() string {
+func (c *Config) ConnectionString() string {
 	psqlInfo := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", c.DbUser, c.DbPassword, c.DbHost, c.DbPort, c.DbName)
 	return psqlInfo
 }

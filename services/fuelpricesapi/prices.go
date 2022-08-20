@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/bjarke-xyz/go-monorepo/libs/common/db"
 )
 
 type FuelType int8
@@ -91,7 +93,7 @@ func NewPriceRepository(config *Config) *PriceRepository {
 }
 
 func (p *PriceRepository) GetPricesForDate(fuelType FuelType, date time.Time) (*DayPrices, error) {
-	db, err := GetDb(p.config)
+	db, err := db.Connect(p.config)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +126,7 @@ func (p *PriceRepository) GetPricesForDate(fuelType FuelType, date time.Time) (*
 }
 
 func (p *PriceRepository) GetPricesBetweenDates(fuelType FuelType, from time.Time, to time.Time) ([]Price, error) {
-	db, err := GetDb(p.config)
+	db, err := db.Connect(p.config)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +141,7 @@ func (p *PriceRepository) GetPricesBetweenDates(fuelType FuelType, from time.Tim
 }
 
 func (p *PriceRepository) GetPrices(fuelType FuelType) ([]Price, error) {
-	db, err := GetDb(p.config)
+	db, err := db.Connect(p.config)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +159,7 @@ func (p *PriceRepository) UpsertPrices(prices []Price) error {
 	if len(prices) == 0 {
 		return nil
 	}
-	db, err := GetDb(p.config)
+	db, err := db.Connect(p.config)
 	if err != nil {
 		return err
 	}
