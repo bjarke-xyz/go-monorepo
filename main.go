@@ -2,13 +2,13 @@ package main
 
 import (
 	"log"
-	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
+
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	config, err := NewConfig()
 	if err != nil {
@@ -22,22 +22,22 @@ func main() {
 
 	appContext := NewAppContext(config)
 
-	r := gin.Default()
-	r.GET("/ping", func(c *gin.Context) {
-		now := time.Now()
-		prices, err := appContext.PriceRepository.GetPricesInRange(0, now.AddDate(0, 0, -1), now.AddDate(0, 0, 1))
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, err.Error())
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-			"prices":  prices,
-		})
-	})
-	r.GET("/job", func(ctx *gin.Context) {
+	defer appContext.JobManager.Stop()
+	appContext.JobManager.Cron("*/1 * * * *", JobIdentifierOk, func() error {
 		job := NewFetchOkDataJob(appContext)
-		go job.ExecuteFetchJob(FuelTypeUnleaded95)
-	})
+		return job.ExecuteFetchJob(OkJobOptions{
+			FetchFromSource: false,
+		})
+	}, config.AppEnv == AppEnvProduction)
+	go appContext.JobManager.Start()
+
+	httpHandler := NewHttpHandler(appContext)
+	if config.AppEnv == AppEnvProduction {
+		gin.SetMode(gin.ReleaseMode)
+	}
+	r := gin.Default()
+	r.GET("/prices", httpHandler.GetPrices)
+	r.GET("/prices/all", httpHandler.GetAllPrices)
+	r.POST("/job", httpHandler.RunJob(config.JobKey))
 	r.Run()
 }

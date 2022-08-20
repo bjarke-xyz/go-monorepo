@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 )
@@ -65,8 +66,8 @@ func (pp PreviousPriceSlice) Value() (driver.Value, error) {
 }
 
 type Price struct {
-	FuelType   FuelType           `json:"fuelType"`
-	Timestamp  time.Time          `db:"ts" json:"timestamp"`
+	FuelType   FuelType           `json:"-"`
+	Date       time.Time          `db:"ts" json:"date"`
 	Price      float32            `json:"price"`
 	PrevPrices PreviousPriceSlice `db:"prev_prices" json:"prevPrices"`
 }
@@ -75,13 +76,54 @@ type PriceRepository struct {
 	config *Config
 }
 
+type DayPrices struct {
+	Today     *Price `json:"today"`
+	Yesterday *Price `json:"yesterday"`
+	Tomorrow  *Price `json:"tomorrow"`
+}
+
+var ErrNoPricesFound = errors.New("no prices found")
+
 func NewPriceRepository(config *Config) *PriceRepository {
 	return &PriceRepository{
 		config: config,
 	}
 }
 
-func (p *PriceRepository) GetPricesInRange(fuelType FuelType, from time.Time, to time.Time) ([]Price, error) {
+func (p *PriceRepository) GetPricesForDate(fuelType FuelType, date time.Time) (*DayPrices, error) {
+	db, err := GetDb(p.config)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	yesterday := date.AddDate(0, 0, -1)
+	tomorrow := date.AddDate(0, 0, 1)
+
+	dayPrices := DayPrices{}
+	prices, err := p.GetPricesBetweenDates(fuelType, yesterday, tomorrow)
+	if err != nil {
+		return nil, err
+	}
+	if len(prices) == 0 {
+		return nil, ErrNoPricesFound
+	}
+	for i, price := range prices {
+		if price.Date.Equal(date) {
+			dayPrices.Today = &prices[i]
+		} else if price.Date.Equal(yesterday) {
+			dayPrices.Yesterday = &prices[i]
+		} else if price.Date.Equal(tomorrow) {
+			dayPrices.Tomorrow = &prices[i]
+		}
+	}
+	if dayPrices.Today == nil && dayPrices.Yesterday == nil && dayPrices.Tomorrow == nil {
+		return nil, ErrNoPricesFound
+	}
+	return &dayPrices, nil
+}
+
+func (p *PriceRepository) GetPricesBetweenDates(fuelType FuelType, from time.Time, to time.Time) ([]Price, error) {
 	db, err := GetDb(p.config)
 	if err != nil {
 		return nil, err
@@ -89,7 +131,7 @@ func (p *PriceRepository) GetPricesInRange(fuelType FuelType, from time.Time, to
 	defer db.Close()
 
 	prices := []Price{}
-	err = db.Select(&prices, "SELECT * FROM fuelprices WHERE fueltype = $1 AND ts between $2 AND $3", fuelType, from, to)
+	err = db.Select(&prices, "SELECT * FROM fuelprices WHERE fueltype = $1 AND ts BETWEEN $2 AND $3", fuelType, from, to)
 	if err != nil {
 		return nil, err
 	}
