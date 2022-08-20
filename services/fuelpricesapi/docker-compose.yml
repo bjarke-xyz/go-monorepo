@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  backend:
+    image: registry.bjarke.xyz/fuelpricesapi
+    build:
+      context: ../../
+      dockerfile: services/fuelpricesapi/Dockerfile
+    secrets:
+      - env
+    networks:
+      - swarm-overlay
+
+networks:
+  swarm-overlay:
+    external: true
+    name: swarm-overlay
+
+secrets:
+  env:
+    file: .env
