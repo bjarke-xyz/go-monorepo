@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -38,6 +39,7 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	r := gin.Default()
+	r.Use(cors.Default())
 	if config.AppEnv == AppEnvProduction {
 		r.TrustedPlatform = gin.PlatformCloudflare
 		r.SetTrustedProxies(nil)
