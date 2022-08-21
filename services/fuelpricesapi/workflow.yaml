@@ -1,0 +1,3 @@
+NAMESPACE: fuelprices
+WORKLOADKIND: deployment
+WORKLOADNAME: fuelpricesapi
