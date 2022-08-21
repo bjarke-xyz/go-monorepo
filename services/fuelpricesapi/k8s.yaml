@@ -51,7 +51,7 @@ metadata:
   namespace: fuelprices
 spec:
   selector:
-    app: fuelprices
+    app: fuelpricesapi
   ports:
     - port: 80
       targetPort: 80
