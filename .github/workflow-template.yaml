@@ -55,7 +55,7 @@ jobs:
     steps:
       - name: SSH
         id: ssh
-        uses: appleboy/ssh-action@v0.1.4
+        uses: appleboy/ssh-action@v0.1.5
         with:
           username: ${{ secrets.SSH_DEPLOYMENT_USERNAME }}
           host: ${{ secrets.SSH_DEPLOYMENT_HOST }}
