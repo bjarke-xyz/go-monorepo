@@ -17,6 +17,8 @@ spec:
       labels:
         app: fuelpricesapi
     spec:
+      imagePullSecrets:
+        - name: regcred
       containers:
         - name: fuelpricesapi
           image: registry.bjarke.xyz/fuelpricesapi
