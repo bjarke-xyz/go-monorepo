@@ -48,7 +48,7 @@ metadata:
   name: fuelpricesapi-ingress
   namespace: fuelprices
   annotations:
-    kubernetes.io/ingress.class: nginx fuelpricesapi-ingress
+    kubernetes.io/ingress.class: nginx
 spec:
   rules:
     - host: fuelprices-api.bjarke.xyz
