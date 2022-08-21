@@ -19,9 +19,18 @@ spec:
     spec:
       imagePullSecrets:
         - name: regcred
+      volumes:
+        - name: env
+          configMap:
+            name: env
       containers:
         - name: fuelpricesapi
           image: registry.bjarke.xyz/fuelpricesapi
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: env
+              mountPath: /.env
+              subPath: .env
           env:
             - name: PORT
               value: "80"
