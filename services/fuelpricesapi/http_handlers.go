@@ -96,8 +96,6 @@ func parseLanguage(langStr string) Language {
 	switch strings.ToLower(langStr) {
 	case "da":
 		return LangDa
-	case "en":
-		return LangEn
 	default:
 		return LangEn
 	}
@@ -105,8 +103,6 @@ func parseLanguage(langStr string) Language {
 
 func parseFuelType(fuelTypeStr string) FuelType {
 	switch strings.ToLower(fuelTypeStr) {
-	case "unleaded95":
-		return FuelTypeUnleaded95
 	case "octane100":
 		return FuelTypeOctane100
 	case "diesel":

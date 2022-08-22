@@ -55,7 +55,7 @@ func getTextDanish(prices *DayPrices, fuelType FuelType) string {
 	}
 
 	text := fmt.Sprintf("%v koster %v kroner og %v ører i dag.", lang.fuelTypeString(fuelType), kroner, orer)
-	if prices.Yesterday.Price > 0 {
+	if prices.Yesterday != nil && prices.Yesterday.Price > 0 {
 		kroner, orer, err = priceToKronerAndOrer(prices.Yesterday)
 		if err != nil {
 			log.Printf("failed to convert yesterday price to kroner and orer: %v", err)
@@ -64,7 +64,7 @@ func getTextDanish(prices *DayPrices, fuelType FuelType) string {
 		diffText := lang.getDiffText(prices.Today, prices.Yesterday)
 		text = fmt.Sprintf("%v I går var prisen %v: %v kroner og %v ører.", text, diffText, kroner, orer)
 	}
-	if prices.Tomorrow.Price > 0 {
+	if prices.Tomorrow != nil && prices.Tomorrow.Price > 0 {
 		kroner, orer, err = priceToKronerAndOrer(prices.Tomorrow)
 		if err != nil {
 			log.Printf("failed to convert tomorrow price to kroner and orer: %v", err)
