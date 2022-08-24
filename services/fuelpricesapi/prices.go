@@ -119,7 +119,7 @@ func (p *PriceRepository) GetPricesForDate(fuelType FuelType, date time.Time) (*
 			dayPrices.Tomorrow = &prices[i]
 		}
 	}
-	if dayPrices.Today == nil && dayPrices.Yesterday == nil && dayPrices.Tomorrow == nil {
+	if dayPrices.Today == nil {
 		return nil, ErrNoPricesFound
 	}
 	return &dayPrices, nil
