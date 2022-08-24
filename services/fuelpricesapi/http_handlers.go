@@ -26,7 +26,8 @@ func (h *HttpHandler) RunJob(jobKey string) gin.HandlerFunc {
 			c.AbortWithStatus(401)
 			return
 		}
-		go h.appContext.JobManager.RunJob(JobIdentifierOk)
+		h.appContext.JobManager.RunJob(JobIdentifierOkFETCH)
+		h.appContext.JobManager.RunJob(JobIdentifierOkPROCESS)
 	}
 }
 

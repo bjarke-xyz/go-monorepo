@@ -25,11 +25,13 @@ func main() {
 	appContext := NewAppContext(config)
 
 	defer appContext.JobManager.Stop()
-	appContext.JobManager.Cron("*/30 10-16 * * *", JobIdentifierOk, func() error {
+	appContext.JobManager.Cron("*/25 10-16 * * *", JobIdentifierOkFETCH, func() error {
 		job := NewFetchOkDataJob(appContext)
-		return job.ExecuteFetchJob(OkJobOptions{
-			FetchFromSource: true,
-		})
+		return job.ExecuteFetchJob()
+	}, config.AppEnv == AppEnvProduction)
+	appContext.JobManager.Cron("*/30 10-16 * * *", JobIdentifierOkPROCESS, func() error {
+		job := NewFetchOkDataJob(appContext)
+		return job.ExecuteProcessJob()
 	}, config.AppEnv == AppEnvProduction)
 	go appContext.JobManager.Start()
 

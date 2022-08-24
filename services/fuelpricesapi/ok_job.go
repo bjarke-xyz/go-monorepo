@@ -13,7 +13,8 @@ import (
 	"time"
 )
 
-const JobIdentifierOk = "OK_DATA_JOB"
+const JobIdentifierOkFETCH = "OK_DATA_JOB_FETCH"
+const JobIdentifierOkPROCESS = "OK_DATA_JOB_PROCESS"
 
 type FetchOkDataJob struct {
 	appContext *AppContext
@@ -70,36 +71,18 @@ type okPriseHistoryItem struct {
 
 const s3Bucket = "fuelprices"
 
-type OkJobOptions struct {
-	FetchFromSource bool
-}
+var allFuelTypes = []FuelType{FuelTypeUnleaded95, FuelTypeOctane100, FuelTypeDiesel}
 
-func (f *FetchOkDataJob) FetchAndStoreOKPrices(fuelType FuelType, jobOptions OkJobOptions) error {
-	var jsonBytes []byte
-	var err error
-	if jobOptions.FetchFromSource {
-		jsonBytes, err = f.fetchOkJsonFromSource(fuelType)
-		if err != nil {
-			return fmt.Errorf("failed to fetch ok json from source: %v", err)
-		}
-	} else {
-		jsonBytes, err = f.fetchOkJsonFromS3(fuelType)
-		if err != nil {
-			if errors.Is(err, ErrNoSuchKey) {
-				jsonBytes, err = f.fetchOkJsonFromSource(fuelType)
-				if err != nil {
-					return fmt.Errorf("attempted to fetch from source because it was not found in S3, but it failed: %v", err)
-				}
-			} else {
-				return fmt.Errorf("failed to fetch ok json from s3: %v", err)
+func (f *FetchOkDataJob) ProcessOkPrices(fuelType FuelType) error {
+	jsonBytes, err := f.fetchOkJsonFromS3(fuelType)
+	if err != nil {
+		if errors.Is(err, ErrNoSuchKey) {
+			jsonBytes, err = f.fetchOkJsonFromSource(fuelType)
+			if err != nil {
+				return fmt.Errorf("attempted to fetch from source because it was not found in S3, but it failed: %v", err)
 			}
-		}
-	}
-
-	if !jobOptions.FetchFromSource {
-		err = f.storeOkJson(jsonBytes, fuelType)
-		if err != nil {
-			return fmt.Errorf("failed to store ok json to s3: %v", err)
+		} else {
+			return fmt.Errorf("failed to fetch ok json from s3: %v", err)
 		}
 	}
 
@@ -116,10 +99,33 @@ func (f *FetchOkDataJob) FetchAndStoreOKPrices(fuelType FuelType, jobOptions OkJ
 	return nil
 }
 
-func (f *FetchOkDataJob) ExecuteFetchJob(jobOptions OkJobOptions) error {
-	fuelTypes := []FuelType{FuelTypeUnleaded95, FuelTypeOctane100, FuelTypeDiesel}
-	for _, fuelType := range fuelTypes {
-		err := f.FetchAndStoreOKPrices(fuelType, jobOptions)
+func (f *FetchOkDataJob) FetchAndStoreOKPrices(fuelType FuelType) error {
+	jsonBytes, err := f.fetchOkJsonFromSource(fuelType)
+	if err != nil {
+		return fmt.Errorf("failed to fetch ok json from source: %v", err)
+	}
+
+	err = f.storeOkJson(jsonBytes, fuelType)
+	if err != nil {
+		return fmt.Errorf("failed to store ok json to s3: %v", err)
+	}
+
+	return nil
+}
+
+func (f *FetchOkDataJob) ExecuteFetchJob() error {
+	for _, fuelType := range allFuelTypes {
+		err := f.FetchAndStoreOKPrices(fuelType)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (f *FetchOkDataJob) ExecuteProcessJob() error {
+	for _, fuelType := range allFuelTypes {
+		err := f.ProcessOkPrices(fuelType)
 		if err != nil {
 			return err
 		}
