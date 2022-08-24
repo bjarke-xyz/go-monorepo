@@ -28,7 +28,7 @@ func main() {
 	appContext.JobManager.Cron("*/30 10-16 * * *", JobIdentifierOk, func() error {
 		job := NewFetchOkDataJob(appContext)
 		return job.ExecuteFetchJob(OkJobOptions{
-			FetchFromSource: false,
+			FetchFromSource: true,
 		})
 	}, config.AppEnv == AppEnvProduction)
 	go appContext.JobManager.Start()
