@@ -11,11 +11,11 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: fuelpricesapi-backend
+      app: shoppinglist-backend
   template:
     metadata:
       labels:
-        app: fuelpricesapi-backend
+        app: shoppinglist-backend
     spec:
       imagePullSecrets:
         - name: regcred
