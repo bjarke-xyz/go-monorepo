@@ -1,0 +1,630 @@
+definitions:
+  common.Response:
+    properties:
+      data: {}
+    type: object
+  item.AddItem:
+    properties:
+      name:
+        type: string
+    type: object
+  item.Item:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      ownerId:
+        type: string
+      updatedAt:
+        type: string
+    required:
+    - id
+    type: object
+  list.AddList:
+    properties:
+      name:
+        type: string
+    type: object
+  list.DefaultList:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: string
+      listId:
+        type: string
+      updatedAt:
+        type: string
+      userId:
+        type: string
+    type: object
+  list.List:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        type: string
+      id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/list.ListItem'
+        type: array
+      name:
+        type: string
+      ownerId:
+        type: string
+      updatedAt:
+        type: string
+    required:
+    - id
+    type: object
+  list.ListItem:
+    properties:
+      createdAt:
+        type: string
+      crossed:
+        type: boolean
+      id:
+        type: string
+      item:
+        $ref: '#/definitions/item.Item'
+      itemId:
+        type: string
+      listId:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  list.UpdateListItem:
+    properties:
+      crossed:
+        type: boolean
+    type: object
+  server.HTTPError:
+    properties:
+      error:
+        type: string
+      status:
+        type: integer
+    type: object
+info:
+  contact: {}
+  title: ShoppingList V4 Backend API
+  version: "1.0"
+paths:
+  /api/v1/items:
+    get:
+      consumes:
+      - application/json
+      description: Get all items for user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/item.Item'
+                  type: array
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+      security:
+      - ApiKeyAuth: []
+      summary: get all items for user
+      tags:
+      - items
+    post:
+      consumes:
+      - application/json
+      description: Create new item
+      parameters:
+      - description: Add item
+        in: body
+        name: item
+        required: true
+        schema:
+          $ref: '#/definitions/item.AddItem'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/item.Item'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+      security:
+      - ApiKeyAuth: []
+      summary: Create new item
+      tags:
+      - items
+  /api/v1/items/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete item
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete item
+      tags:
+      - items
+    put:
+      consumes:
+      - application/json
+      description: Update item
+      parameters:
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update item
+        in: body
+        name: item
+        required: true
+        schema:
+          $ref: '#/definitions/item.AddItem'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/item.Item'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+      security:
+      - ApiKeyAuth: []
+      summary: Update item
+      tags:
+      - items
+  /api/v1/lists:
+    get:
+      consumes:
+      - application/json
+      description: Get all lists for user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/list.List'
+                  type: array
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+      security:
+      - ApiKeyAuth: []
+      summary: get all lists for user
+      tags:
+      - lists
+    post:
+      consumes:
+      - application/json
+      description: Create new list
+      parameters:
+      - description: Add list
+        in: body
+        name: list
+        required: true
+        schema:
+          $ref: '#/definitions/list.AddList'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/list.List'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+      security:
+      - ApiKeyAuth: []
+      summary: Create new list
+      tags:
+      - lists
+  /api/v1/lists/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete list
+      parameters:
+      - description: List ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete list
+      tags:
+      - lists
+    put:
+      consumes:
+      - application/json
+      description: Update list
+      parameters:
+      - description: List ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update list
+        in: body
+        name: list
+        required: true
+        schema:
+          $ref: '#/definitions/list.AddList'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/list.List'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+      security:
+      - ApiKeyAuth: []
+      summary: Update list
+      tags:
+      - lists
+  /api/v1/lists/{id}/default:
+    put:
+      consumes:
+      - application/json
+      description: set default list
+      parameters:
+      - description: List ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/list.DefaultList'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+      security:
+      - ApiKeyAuth: []
+      summary: set default list
+      tags:
+      - lists
+  /api/v1/lists/{id}/items/crossed:
+    delete:
+      consumes:
+      - application/json
+      description: Clear crossed list items
+      parameters:
+      - description: List ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+      security:
+      - ApiKeyAuth: []
+      summary: Clear crossed list items
+      tags:
+      - lists
+  /api/v1/lists/{list-id}/items/{item-id}:
+    post:
+      consumes:
+      - application/json
+      description: Add item to list
+      parameters:
+      - description: List ID
+        in: path
+        name: list-id
+        required: true
+        type: string
+      - description: Item ID
+        in: path
+        name: item-id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/list.ListItem'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+      security:
+      - ApiKeyAuth: []
+      summary: Add item to list
+      tags:
+      - lists
+  /api/v1/lists/{list-id}/items/{list-item-id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove item from list
+      parameters:
+      - description: List ID
+        in: path
+        name: list-id
+        required: true
+        type: string
+      - description: List-Item ID
+        in: path
+        name: list-item-id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+      security:
+      - ApiKeyAuth: []
+      summary: Remove item from list
+      tags:
+      - lists
+    put:
+      consumes:
+      - application/json
+      description: Update list item
+      parameters:
+      - description: List ID
+        in: path
+        name: list-id
+        required: true
+        type: string
+      - description: List-Item ID
+        in: path
+        name: list-item-id
+        required: true
+        type: string
+      - description: Update list item
+        in: body
+        name: list
+        required: true
+        schema:
+          $ref: '#/definitions/list.UpdateListItem'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/list.ListItem'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+      security:
+      - ApiKeyAuth: []
+      summary: Update list item
+      tags:
+      - lists
+  /api/v1/lists/default:
+    get:
+      consumes:
+      - application/json
+      description: Get the user's default list
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/list.DefaultList'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/server.HTTPError'
+      security:
+      - ApiKeyAuth: []
+      summary: Get the user's default list
+      tags:
+      - lists
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

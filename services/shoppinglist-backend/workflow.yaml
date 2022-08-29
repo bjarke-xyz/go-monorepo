@@ -1,0 +1,3 @@
+NAMESPACE: shoppinglist
+WORKLOADKIND: deployment
+WORKLOADNAME: shoppinglist-backend
