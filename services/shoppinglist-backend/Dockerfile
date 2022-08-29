@@ -4,7 +4,7 @@ RUN apk --no-cache add ca-certificates
 
 WORKDIR /build
 
-COPY go.mod go.sum ./
+COPY services/shoppinglist-backend/go.mod services/shoppinglist-backend/go.sum ./
 RUN go mod download
 
 COPY . .
