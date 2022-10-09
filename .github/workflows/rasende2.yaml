@@ -2,7 +2,7 @@
 
 # Template variables:
 # SERVICE -> rasende2
-# NAMESPACE -> fuelprices
+# NAMESPACE -> rasende2
 # WORKLOADKIND -> deployment
 # WORKLOADNAME -> rasende2
 
@@ -60,7 +60,7 @@ jobs:
           username: ${{ secrets.SSH_DEPLOYMENT_USERNAME }}
           host: ${{ secrets.SSH_DEPLOYMENT_HOST }}
           key: ${{ secrets.SSH_DEPLOYMENT_KEY }}
-          script: ${{ secrets.SSH_DEPLOYMENT_SCRIPT_K8S }} "${{ github.repository }}/services/rasende2" "fuelprices" "deployment" "rasende2"
+          script: ${{ secrets.SSH_DEPLOYMENT_SCRIPT_K8S }} "${{ github.repository }}/services/rasende2" "rasende2" "deployment" "rasende2"
       - name: Notify on error
         uses: fjogeleit/http-request-action@v1
         if: failure() && steps.ssh.outcome == 'failure'
