@@ -59,11 +59,13 @@ func (r *RssService) FetchAndSaveNewItems() error {
 	if err != nil {
 		return fmt.Errorf("failed to get rss urls: %w", err)
 	}
+	errors := make([]error, 0)
 	for _, rssUrl := range rssUrls {
 		toInsert := make([]RssItemDto, 0)
 		existing, err := r.repository.GetItems(rssUrl.Name)
 		if err != nil {
-			return fmt.Errorf("failed to get items for %v: %w", rssUrl.Name, err)
+			errors = append(errors, fmt.Errorf("failed to get items for %v: %w", rssUrl.Name, err))
+			continue
 		}
 		existingIds := make(map[string]bool)
 		for _, item := range existing {
@@ -72,7 +74,8 @@ func (r *RssService) FetchAndSaveNewItems() error {
 
 		fromFeed, err := r.parse(rssUrl)
 		if err != nil {
-			return fmt.Errorf("failed to get items from feed %v: %w", rssUrl.Name, err)
+			errors = append(errors, fmt.Errorf("failed to get items from feed %v: %w", rssUrl.Name, err))
+			continue
 		}
 		for _, item := range fromFeed {
 			_, exists := existingIds[item.ItemId]
@@ -84,8 +87,19 @@ func (r *RssService) FetchAndSaveNewItems() error {
 		log.Printf("FetchAndSaveNewItems: %v inserted %v new items", rssUrl.Name, len(toInsert))
 		err = r.repository.InsertItems(toInsert)
 		if err != nil {
-			return fmt.Errorf("failed to insert items for %v: %w", rssUrl.Name, err)
+			errors = append(errors, fmt.Errorf("failed to insert items for %v: %w", rssUrl.Name, err))
+			continue
 		}
+	}
+	if len(errors) > 0 {
+		err := errors[0]
+		for i, e := range errors {
+			if i == 0 {
+				continue
+			}
+			err = fmt.Errorf("%w. %w", err, e)
+		}
+		return err
 	}
 	return nil
 }
