@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/bjarke-xyz/go-monorepo/libs/common/db"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -17,7 +18,7 @@ func main() {
 		log.Printf("failed to load env: %v", err)
 	}
 
-	err = Migrate("up", config.ConnectionString())
+	err = db.Migrate("up", config.ConnectionString())
 	if err != nil {
 		log.Printf("failed to migrate: %v", err)
 	}
