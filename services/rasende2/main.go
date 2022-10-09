@@ -2,35 +2,50 @@ package main
 
 import (
 	"log"
-	"strings"
 
-	"github.com/bjarke-xyz/rasende2/duda"
+	"github.com/bjarke-xyz/go-monorepo/libs/common"
+	"github.com/bjarke-xyz/go-monorepo/libs/common/config"
+	"github.com/bjarke-xyz/go-monorepo/libs/common/db"
+	"github.com/bjarke-xyz/go-monorepo/libs/common/jobs"
 	"github.com/bjarke-xyz/rasende2/pkg"
+	"github.com/bjarke-xyz/rasende2/rss"
 )
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	context := &pkg.AppContext{
-		Cache: pkg.NewCache("./cache"),
-	}
-	dudaScraper := duda.NewScraper(context)
-	links, err := dudaScraper.GetMediaUrls()
+
+	cfg, err := config.NewConfig()
 	if err != nil {
-		log.Fatal(err)
-	}
-	workingLinks, err := dudaScraper.DownloadContents(links)
-	if err != nil {
-		log.Fatal(err)
+		log.Panicf("failed to load config: %v", err)
 	}
 
-	for i, link := range workingLinks {
-		content, err := dudaScraper.GetContent(link)
-		if err != nil {
-			log.Printf("error getting content for %v: %v", link.Url, err)
-		}
-		if strings.Contains(content, "rss") {
-			log.Printf("(%v) %v: %v", i, link.Url, len(content))
-		}
+	err = db.Migrate("up", cfg.ConnectionString())
+	if err != nil {
+		log.Printf("failed to migrate: %v", err)
 	}
+
+	context := &pkg.AppContext{
+		Cache:      pkg.NewCache("./cache"),
+		Config:     cfg,
+		JobManager: *jobs.NewJobManager(),
+	}
+
+	rssRepository := rss.NewRssRepository(context)
+	rssService := rss.NewRssService(context, rssRepository)
+
+	defer context.JobManager.Stop()
+	context.JobManager.Cron("1 * * * *", rss.JobIdentifierIngestion, func() error {
+		job := rss.NewIngestionJob(rssService)
+		return job.ExecuteJob()
+	}, cfg.AppEnv == config.AppEnvProduction)
+	go context.JobManager.Start()
+
+	rssHttpHandlers := rss.NewHttpHandlers(context, rssService)
+
+	r := common.GinRouter(cfg)
+	r.GET("/search", rssHttpHandlers.HandleSearch)
+	r.POST("/job", rssHttpHandlers.RunJob(cfg.JobKey))
+
+	r.Run()
 
 }

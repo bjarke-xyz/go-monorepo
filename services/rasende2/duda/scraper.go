@@ -3,7 +3,7 @@ package duda
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -78,7 +78,7 @@ func (s *Scraper) GetContent(link Link) (string, error) {
 		return "", fmt.Errorf("%v returned non-200: %v", link.Url, resp.StatusCode)
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("error reading body: %w", err)
 	}
@@ -138,7 +138,7 @@ func (s *Scraper) GetMediaUrls() ([]Link, error) {
 		}
 
 		defer res.Body.Close()
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		if err != nil {
 			return nil, fmt.Errorf("could not read body: %w", err)
 		}

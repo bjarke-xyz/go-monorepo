@@ -1,0 +1,68 @@
+[
+  { "name": "Ekstrabladet", "urls": ["https://ekstrabladet.dk/rssfeed/all/"] },
+
+  { "name": "BT", "urls": ["https://www.bt.dk/bt/seneste/rss"] },
+
+  {
+    "name": "Avisen Danmark",
+    "urls": ["https://avisendanmark.dk/feed/forside"]
+  },
+
+  { "name": "Fyens", "urls": ["https://fyens.dk/feed/forside"] },
+
+  {
+    "name": "Jyllands-Posten",
+    "urls": [
+      "https://jyllands-posten.dk/?service=rssfeed&mode=area&areaNames=level0,topflow"
+    ]
+  },
+
+  { "name": "Politiken", "urls": ["https://politiken.dk/rss/senestenyt.rss"] },
+
+  { "name": "JydskeVestkysten", "urls": ["https://jv.dk/feed/forside"] },
+
+  { "name": "Berlingske", "urls": ["https://www.berlingske.dk/content/rss"] },
+
+  {
+    "name": "DR",
+    "urls": ["https://www.dr.dk/nyheder/service/feeds/senestenyt"]
+  },
+
+  {
+    "name": "TV2",
+    "urls": ["https://feeds.services.tv2.dk/api/feeds/nyheder/rss"]
+  },
+
+  { "name": "Dagens", "urls": ["https://www.dagens.dk/rss"] },
+
+  { "name": "Børsen", "urls": ["https://borsen.dk/rss"] },
+
+  {
+    "name": "Kristeligt Dagblad",
+    "urls": ["https://www.kristeligt-dagblad.dk/rss/nyheder"]
+  },
+
+  {
+    "name": "Viborg Folkeblad",
+    "urls": ["https://viborg-folkeblad.dk/feed/forside"]
+  },
+
+  { "name": "Nordjyske", "urls": ["https://nordjyske.dk/rss/nyheder"] },
+
+  { "name": "Computerworld", "urls": ["https://www.computerworld.dk/rss/all"] },
+
+  { "name": "Ingeniøren", "urls": ["https://ing.dk/rss/nyheder"] },
+
+  { "name": "Arbejderen", "urls": ["https://arbejderen.dk/feed/"] },
+
+  {
+    "name": "BILLED-BLADET",
+    "urls": [
+      "https://www.billedbladet.dk/rss/mary.xml",
+      "https://www.billedbladet.dk/rss/kendte.xml",
+      "https://www.billedbladet.dk/rss/kongelige.xml"
+    ]
+  },
+
+  { "name": "Version2", "urls": ["https://www.version2.dk/rss"] }
+]
