@@ -11,10 +11,11 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.27.5
 	github.com/bjarke-xyz/go-monorepo/libs/common v0.0.0-00010101000000-000000000000
 	github.com/gin-gonic/gin v1.8.1
-	github.com/go-co-op/gocron v1.16.2
-	github.com/golang-migrate/migrate/v4 v4.15.2
+	github.com/go-co-op/gocron v1.17.0
 	github.com/joho/godotenv v1.4.0
 )
+
+require github.com/golang-migrate/migrate/v4 v4.15.2 // indirect
 
 require (
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.4 // indirect
