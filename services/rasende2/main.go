@@ -44,6 +44,7 @@ func main() {
 
 	r := common.GinRouter(cfg)
 	r.GET("/search", rssHttpHandlers.HandleSearch)
+	r.GET("/charts", rssHttpHandlers.HandleCharts)
 	r.POST("/job", rssHttpHandlers.RunJob(cfg.JobKey))
 
 	r.Run()
