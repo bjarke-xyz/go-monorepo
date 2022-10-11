@@ -59,7 +59,7 @@ type ChartsResult struct {
 func MakeLineChart(items []RssItemDto) ChartResult {
 	dateFormat := "01-02"
 	today := time.Now()
-	sevenDaysAgo := today.Add(-time.Hour * 24 * 7)
+	sevenDaysAgo := today.Add(-time.Hour * 24 * 6)
 	lastWeekItemsGroupedByDate := make(map[string]int)
 	for _, item := range items {
 		if item.Published != nil && item.Published.Before(today) && item.Published.After(sevenDaysAgo) {
