@@ -78,6 +78,8 @@ func MakeLineChart(items []RssItemDto) ChartResult {
 		datum, ok := lastWeekItemsGroupedByDate[d.Format(dateFormat)]
 		if ok {
 			data = append(data, datum)
+		} else {
+			data = append(data, 0)
 		}
 	}
 
