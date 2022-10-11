@@ -3,6 +3,7 @@ package rss
 import (
 	"log"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/bjarke-xyz/rasende2/pkg"
@@ -109,9 +110,15 @@ func MakeDoughnutChart(items []RssItemDto) ChartResult {
 
 	labels := make([]string, 0)
 	data := make([]int, 0)
-	for siteName, siteItems := range sitesSet {
+	for siteName, _ := range sitesSet {
 		labels = append(labels, siteName)
-		data = append(data, len(siteItems))
+	}
+	sort.Strings(labels)
+	for _, siteName := range labels {
+		siteItems, ok := sitesSet[siteName]
+		if ok {
+			data = append(data, len(siteItems))
+		}
 	}
 
 	return ChartResult{
