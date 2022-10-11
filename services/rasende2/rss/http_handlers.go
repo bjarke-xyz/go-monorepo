@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/bjarke-xyz/rasende2/pkg"
@@ -29,11 +30,19 @@ type SearchResult struct {
 
 func (h *HttpHandlers) HandleSearch(c *gin.Context) {
 	query := c.Query("q")
+	limitStr := c.DefaultQuery("limit", "5")
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil {
+		limit = 5
+	}
 	results, err := h.service.SearchItems(query)
 	if err != nil {
 		log.Printf("failed to get items with query %v: %v", query, err)
 		c.JSON(http.StatusInternalServerError, SearchResult{})
 		return
+	}
+	if len(results) > limit {
+		results = results[0:limit]
 	}
 	c.JSON(http.StatusOK, SearchResult{
 		HighlightedWords: []string{query},
