@@ -35,7 +35,12 @@ func (h *HttpHandlers) HandleSearch(c *gin.Context) {
 	if err != nil {
 		limit = 5
 	}
-	results, err := h.service.SearchItems(query)
+	searchContentStr := c.DefaultQuery("content", "false")
+	searchContent, err := strconv.ParseBool(searchContentStr)
+	if err != nil {
+		searchContent = false
+	}
+	results, err := h.service.SearchItems(query, searchContent)
 	if err != nil {
 		log.Printf("failed to get items with query %v: %v", query, err)
 		c.JSON(http.StatusInternalServerError, SearchResult{})
@@ -66,13 +71,13 @@ type ChartsResult struct {
 	Charts []ChartResult `json:"charts"`
 }
 
-func MakeLineChart(items []RssItemDto) ChartResult {
+func MakeLineChart(items []RssItemDto, title string, datasetLabel string) ChartResult {
 	dateFormat := "01-02"
 	today := time.Now()
 	sevenDaysAgo := today.Add(-time.Hour * 24 * 6)
 	lastWeekItemsGroupedByDate := make(map[string]int)
 	for _, item := range items {
-		if item.Published != nil && item.Published.Before(today) && item.Published.After(sevenDaysAgo) {
+		if item.Published.Before(today) && item.Published.After(sevenDaysAgo) {
 			key := item.Published.Format(dateFormat)
 			_, ok := lastWeekItemsGroupedByDate[key]
 			if !ok {
@@ -95,18 +100,18 @@ func MakeLineChart(items []RssItemDto) ChartResult {
 
 	return ChartResult{
 		Type:   "line",
-		Title:  "Den seneste uges raserier",
+		Title:  title,
 		Labels: labels,
 		Datasets: []ChartDataset{
 			{
-				Label: "Raseriudbrud",
+				Label: datasetLabel,
 				Data:  data,
 			},
 		},
 	}
 }
 
-func MakeDoughnutChart(items []RssItemDto) ChartResult {
+func MakeDoughnutChart(items []RssItemDto, title string) ChartResult {
 	sitesSet := make(map[string][]RssItemDto)
 	for _, item := range items {
 		_, ok := sitesSet[item.SiteName]
@@ -119,7 +124,7 @@ func MakeDoughnutChart(items []RssItemDto) ChartResult {
 
 	labels := make([]string, 0)
 	data := make([]int, 0)
-	for siteName, _ := range sitesSet {
+	for siteName := range sitesSet {
 		labels = append(labels, siteName)
 	}
 	sort.Strings(labels)
@@ -132,7 +137,7 @@ func MakeDoughnutChart(items []RssItemDto) ChartResult {
 
 	return ChartResult{
 		Type:   "pie",
-		Title:  "Raseri i de forskellige medier",
+		Title:  title,
 		Labels: labels,
 		Datasets: []ChartDataset{
 			{
@@ -145,16 +150,24 @@ func MakeDoughnutChart(items []RssItemDto) ChartResult {
 
 func (h *HttpHandlers) HandleCharts(c *gin.Context) {
 	query := c.Query("q")
-	results, err := h.service.SearchItems(query)
+	results, err := h.service.SearchItems(query, false)
 	if err != nil {
 		log.Printf("failed to get items with query %v: %v", query, err)
 		c.JSON(http.StatusInternalServerError, nil)
 		return
 	}
+	lineTitle := "Den seneste uges raserier"
+	lineDatasetLabel := "Raseriudbrud"
+	doughnutTitle := "Raseri i de forskellige medier"
+	if query != "rasende" {
+		lineTitle = "Den seneste uges brug af '" + query + "'"
+		lineDatasetLabel = "Antal '" + query + "'"
+		doughnutTitle = "Brug af '" + query + "' i de forskellige medier"
+	}
 	c.JSON(http.StatusOK, ChartsResult{
 		Charts: []ChartResult{
-			MakeLineChart(results),
-			MakeDoughnutChart(results),
+			MakeLineChart(results, lineTitle, lineDatasetLabel),
+			MakeDoughnutChart(results, doughnutTitle),
 		},
 	})
 }

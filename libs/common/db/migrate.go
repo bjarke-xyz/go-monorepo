@@ -21,7 +21,7 @@ func Migrate(direction string, dbConnStr string) error {
 		migrateMethod = m.Down
 	}
 	if err := migrateMethod(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		return fmt.Errorf("failed to migrate up: %w", err)
+		return fmt.Errorf("failed to migrate %v: %w", direction, err)
 	}
 	return nil
 }

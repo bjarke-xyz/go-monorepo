@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/bjarke-xyz/rasende2/pkg"
 	"github.com/microcosm-cc/bluemonday"
@@ -36,21 +37,26 @@ func getItemId(item *gofeed.Item) string {
 }
 
 func (r *RssService) convertToDto(feedItem *gofeed.Item, rssUrl RssUrlDto) RssItemDto {
+	published := feedItem.PublishedParsed
+	if published == nil {
+		now := time.Now()
+		published = &now
+	}
 	return RssItemDto{
 		ItemId:    getItemId(feedItem),
 		SiteName:  rssUrl.Name,
 		Title:     feedItem.Title,
 		Content:   strings.TrimSpace(r.sanitizer.Sanitize(feedItem.Content)),
 		Link:      feedItem.Link,
-		Published: feedItem.PublishedParsed,
+		Published: *published,
 	}
 }
 
-func (r *RssService) SearchItems(query string) ([]RssItemDto, error) {
+func (r *RssService) SearchItems(query string, searchContent bool) ([]RssItemDto, error) {
 	if len(query) > 50 || len(query) <= 2 {
 		return make([]RssItemDto, 0), nil
 	}
-	items, err := r.repository.SearchItems(query)
+	items, err := r.repository.SearchItems(query, searchContent)
 	return items, err
 }
 
@@ -97,7 +103,7 @@ func (r *RssService) FetchAndSaveNewItems() error {
 			if i == 0 {
 				continue
 			}
-			err = fmt.Errorf("%w. %w", err, e)
+			err = fmt.Errorf("%v. %w", err, e)
 		}
 		return err
 	}

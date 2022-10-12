@@ -39,23 +39,29 @@ func (r *RssRepository) GetRssUrls() ([]RssUrlDto, error) {
 }
 
 type RssItemDto struct {
-	ItemId    string     `db:"item_id" json:"itemId"`
-	SiteName  string     `db:"site_name" json:"siteName"`
-	Title     string     `db:"title" json:"title"`
-	Content   string     `db:"content" json:"content"`
-	Link      string     `db:"link" json:"link"`
-	Published *time.Time `db:"published" json:"published"`
+	ItemId    string    `db:"item_id" json:"itemId"`
+	SiteName  string    `db:"site_name" json:"siteName"`
+	Title     string    `db:"title" json:"title"`
+	Content   string    `db:"content" json:"content"`
+	Link      string    `db:"link" json:"link"`
+	Published time.Time `db:"published" json:"published"`
 }
 
-func (r *RssRepository) SearchItems(query string) ([]RssItemDto, error) {
+func (r *RssRepository) SearchItems(query string, searchContent bool) ([]RssItemDto, error) {
 	db, err := db.Connect(r.context.Config)
 	if err != nil {
 		return nil, err
 	}
-	defer db.Close()
+	db = db.Unsafe()
 	defer db.Close()
 	var rssItems []RssItemDto
-	err = db.Select(&rssItems, "SELECT * FROM rss_items WHERE LOWER(title) LIKE '%' || $1 || '%' order by published desc", query)
+	sql := "SELECT * FROM rss_items WHERE ts_title @@ to_tsquery('danish', $1)"
+	if searchContent {
+		sql = sql + " OR ts_content @@ to_tsquery('danish', $1)"
+	}
+	sql = sql + " ORDER BY published DESC"
+	// err = db.Select(&rssItems, "SELECT * FROM rss_items WHERE LOWER(title) LIKE '%' || $1 || '%' order by published desc", query)
+	err = db.Select(&rssItems, sql, query)
 	if err != nil {
 		return nil, fmt.Errorf("error getting items with query %v: %w", query, err)
 	}
@@ -67,6 +73,7 @@ func (r *RssRepository) GetItems(siteName string) ([]RssItemDto, error) {
 	if err != nil {
 		return nil, err
 	}
+	db = db.Unsafe()
 	defer db.Close()
 	var rssItems []RssItemDto
 	err = db.Select(&rssItems, "SELECT * FROM rss_items WHERE site_name = $1", siteName)
