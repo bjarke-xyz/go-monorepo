@@ -98,7 +98,7 @@ func (r *RssRepository) InsertItems(items []RssItemDto) error {
 		return fmt.Errorf("failed to begin tx: %w", err)
 	}
 	_, err = db.NamedExec("INSERT INTO rss_items (item_id, site_name, title, content, link, published) "+
-		"values (:item_id, :site_name, :title, :content, :link, :published)", items)
+		"values (:item_id, :site_name, :title, :content, :link, :published) on conflict do nothing", items)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to insert: %w", err)
