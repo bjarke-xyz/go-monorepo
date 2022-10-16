@@ -1,6 +1,7 @@
 package rss
 
 import (
+	"context"
 	"crypto/md5"
 	"fmt"
 	"io"
@@ -52,11 +53,19 @@ func (r *RssService) convertToDto(feedItem *gofeed.Item, rssUrl RssUrlDto) RssIt
 	}
 }
 
-func (r *RssService) SearchItems(query string, searchContent bool) ([]RssItemDto, error) {
+func (r *RssService) SearchItems(ctx context.Context, query string, searchContent bool) ([]RssItemDto, error) {
+	var items []RssItemDto = []RssItemDto{}
 	if len(query) > 50 || len(query) <= 2 {
-		return make([]RssItemDto, 0), nil
+		return items, nil
+	}
+	cacheKey := fmt.Sprintf("SearchItems:%v:%v", query, searchContent)
+	if err := r.context.Cache.Get(ctx, cacheKey, &items); err == nil {
+		return items, nil
 	}
 	items, err := r.repository.SearchItems(query, searchContent)
+	if err == nil {
+		r.context.Cache.Set(ctx, cacheKey, items, time.Hour)
+	}
 	return items, err
 }
 

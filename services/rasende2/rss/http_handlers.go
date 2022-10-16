@@ -40,7 +40,7 @@ func (h *HttpHandlers) HandleSearch(c *gin.Context) {
 	if err != nil {
 		searchContent = false
 	}
-	results, err := h.service.SearchItems(query, searchContent)
+	results, err := h.service.SearchItems(c.Request.Context(), query, searchContent)
 	if err != nil {
 		log.Printf("failed to get items with query %v: %v", query, err)
 		c.JSON(http.StatusInternalServerError, SearchResult{})
@@ -150,7 +150,7 @@ func MakeDoughnutChart(items []RssItemDto, title string) ChartResult {
 
 func (h *HttpHandlers) HandleCharts(c *gin.Context) {
 	query := c.Query("q")
-	results, err := h.service.SearchItems(query, false)
+	results, err := h.service.SearchItems(c.Request.Context(), query, false)
 	if err != nil {
 		log.Printf("failed to get items with query %v: %v", query, err)
 		c.JSON(http.StatusInternalServerError, nil)

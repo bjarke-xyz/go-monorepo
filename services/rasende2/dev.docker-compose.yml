@@ -11,3 +11,8 @@ services:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=rasende2
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"

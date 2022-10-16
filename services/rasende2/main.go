@@ -25,7 +25,7 @@ func main() {
 	}
 
 	context := &pkg.AppContext{
-		Cache:      pkg.NewCache("./cache"),
+		Cache:      db.NewRedisCache(cfg),
 		Config:     cfg,
 		JobManager: *jobs.NewJobManager(),
 	}

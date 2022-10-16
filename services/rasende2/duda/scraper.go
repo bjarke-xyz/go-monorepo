@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/bjarke-xyz/rasende2/pkg"
 )
 
 var (
@@ -27,18 +26,18 @@ type disabledSite struct {
 }
 
 type Scraper struct {
-	context *pkg.AppContext
+	cache *Cache
 }
 
-func NewScraper(context *pkg.AppContext) *Scraper {
+func NewScraper(cache *Cache) *Scraper {
 	return &Scraper{
-		context: context,
+		cache: cache,
 	}
 }
 
 func (s *Scraper) getDisabledSites() (map[string]disabledSite, error) {
 	disabledSites := make(map[string]disabledSite)
-	disabledSitesJson, ok := s.context.Cache.Get(disabledSitesCacheKey)
+	disabledSitesJson, ok := s.cache.Get(disabledSitesCacheKey)
 	if ok {
 		err := json.Unmarshal([]byte(disabledSitesJson), &disabledSites)
 		if err != nil {
@@ -54,13 +53,13 @@ func (s *Scraper) saveDisabledSites(disabledSites map[string]disabledSite) error
 		return fmt.Errorf("error marshaling disabled sites: %w", err)
 	}
 	disabledSitesJson := string(disabledSitesBytes)
-	s.context.Cache.Put(disabledSitesCacheKey, disabledSitesJson)
+	s.cache.Put(disabledSitesCacheKey, disabledSitesJson)
 	return nil
 }
 
 func (s *Scraper) GetContent(link Link) (string, error) {
 	cacheKey := "links/" + strings.ReplaceAll(link.Url, "/", "_")
-	content, ok := s.context.Cache.Get(cacheKey)
+	content, ok := s.cache.Get(cacheKey)
 	if ok {
 		return content, nil
 	}
@@ -83,7 +82,7 @@ func (s *Scraper) GetContent(link Link) (string, error) {
 		return "", fmt.Errorf("error reading body: %w", err)
 	}
 	bodyStr := string(body)
-	s.context.Cache.Put(cacheKey, bodyStr)
+	s.cache.Put(cacheKey, bodyStr)
 	return bodyStr, nil
 }
 
@@ -119,7 +118,7 @@ func (s *Scraper) GetMediaUrls() ([]Link, error) {
 	duda := "https://duda.dk/aviser/"
 
 	cacheKey := "dudahtml"
-	cachedHtml, ok := s.context.Cache.Get(cacheKey)
+	cachedHtml, ok := s.cache.Get(cacheKey)
 	if !ok {
 		log.Println("duda not found in cache, getting")
 		client := &http.Client{}
@@ -143,7 +142,7 @@ func (s *Scraper) GetMediaUrls() ([]Link, error) {
 			return nil, fmt.Errorf("could not read body: %w", err)
 		}
 		cachedHtml = string(body)
-		s.context.Cache.Put(cacheKey, cachedHtml)
+		s.cache.Put(cacheKey, cachedHtml)
 	}
 
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(cachedHtml))

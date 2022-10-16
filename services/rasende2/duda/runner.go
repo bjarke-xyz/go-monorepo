@@ -3,12 +3,10 @@ package duda
 import (
 	"log"
 	"strings"
-
-	"github.com/bjarke-xyz/rasende2/pkg"
 )
 
-func PrintPotentialRssFeedSites(context *pkg.AppContext) {
-	dudaScraper := NewScraper(context)
+func PrintPotentialRssFeedSites(cache *Cache) {
+	dudaScraper := NewScraper(cache)
 	links, err := dudaScraper.GetMediaUrls()
 	if err != nil {
 		log.Fatal(err)
