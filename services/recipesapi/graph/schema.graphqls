@@ -1,0 +1,58 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+scalar Time
+
+type Image {
+  src: String!
+  type: String!
+  size: Int!
+  name: String!
+}
+
+type RecipeIngredients {
+  original: String!
+  id: Int
+  title: String
+  volume: Float
+  unit: String
+  meta: [String!]!
+}
+type RecipeParts {
+  title: String!
+  ingredients: [RecipeIngredients]
+  steps: [String!]!
+}
+type Recipe {
+  id: ID!
+  title: String!
+  description: String
+  image: Image
+  user: User!
+  createdDateTime: Time!
+  moderatedDateTime:Time  
+  lastModifiedDateTime: Time!
+  published: Boolean!
+  tips: [String!]!
+  yield: String
+  parts: [RecipeParts!]!
+}
+
+type User {
+  id: ID!
+  name: String!
+}
+
+type Query {
+  recipes: [Recipe!]!
+}
+
+input NewRecipe {
+  title: String!
+  description: String
+}
+
+type Mutation {
+  createRecipe(input: NewRecipe!): Recipe!
+}
