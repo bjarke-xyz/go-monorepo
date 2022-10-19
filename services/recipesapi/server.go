@@ -85,7 +85,7 @@ func imageHandler(storage *storage.StorageClient, fileRepository *file.FileRepos
 			ctx.AbortWithError(500, fmt.Errorf("failed to get image: %w", err))
 			return
 		}
-		ctx.Header("Cache-Control", "max-age=3600")
+		ctx.Header("Cache-Control", "public, max-age=86400")
 		ctx.Data(200, imageDto.ContentType, bytes)
 	}
 }
