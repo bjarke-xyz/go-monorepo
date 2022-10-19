@@ -1,6 +1,6 @@
 # Where are all the schema files located? globs are supported eg  src/**/*.graphqls
 schema:
-  - graph/*.graphqls
+  - graph/**/*.graphqls
 
 # Where should the generated server code go?
 exec:
@@ -20,8 +20,8 @@ model:
 # Where should the resolver implementations go?
 resolver:
   layout: follow-schema
-  dir: graph
-  package: graph
+  dir: graph/resolver
+  package: resolver
 
 # Optional: turn on use ` + "`" + `gqlgen:"fieldName"` + "`" + ` tags in your models
 # struct_tag: json
@@ -63,5 +63,7 @@ models:
       - github.com/99designs/gqlgen/graphql.Int32
   Recipe:
     fields:
+      image:
+        resolver: true
       user:
         resolver: true

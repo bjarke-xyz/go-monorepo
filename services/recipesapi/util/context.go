@@ -27,8 +27,12 @@ func GinContextFromContext(ctx context.Context) (*gin.Context, error) {
 	return gc, nil
 }
 
-func GinContextUser(c *gin.Context) (*model.User, bool) {
-	userAny, ok := c.Get("user")
+func GinContextUser(ctx context.Context) (*model.User, bool) {
+	gc, err := GinContextFromContext(ctx)
+	if err != nil {
+		return nil, false
+	}
+	userAny, ok := gc.Get("user")
 	if !ok {
 		return nil, false
 	}

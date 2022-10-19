@@ -26,7 +26,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o recipesapi .
 FROM scratch
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-# COPY --from=builder /build/services/recipesapi/migrations /migrations
+COPY --from=builder /build/services/recipesapi/migrations /migrations
 COPY --from=builder ["/build/services/recipesapi/recipesapi", "/build/.env*", "/"]
 
 ENTRYPOINT ["/recipesapi"]

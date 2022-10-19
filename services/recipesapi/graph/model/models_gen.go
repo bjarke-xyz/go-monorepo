@@ -2,6 +2,10 @@
 
 package model
 
+import (
+	"github.com/99designs/gqlgen/graphql"
+)
+
 type Image struct {
 	Src  string `json:"src"`
 	Type string `json:"type"`
@@ -9,7 +13,27 @@ type Image struct {
 	Name string `json:"name"`
 }
 
-type NewRecipe struct {
-	Title       string  `json:"title"`
-	Description *string `json:"description"`
+type RecipeIngredientsInput struct {
+	Original string   `json:"original"`
+	ID       *int     `json:"id"`
+	Title    *string  `json:"title"`
+	Volume   *float64 `json:"volume"`
+	Unit     *string  `json:"unit"`
+	Meta     []string `json:"meta"`
+}
+
+type RecipeInput struct {
+	Title       string              `json:"title"`
+	Description *string             `json:"description"`
+	Image       *graphql.Upload     `json:"image"`
+	Published   bool                `json:"published"`
+	Tips        []string            `json:"tips"`
+	Yield       *string             `json:"yield"`
+	Parts       []*RecipePartsInput `json:"parts"`
+}
+
+type RecipePartsInput struct {
+	Title       string                    `json:"title"`
+	Ingredients []*RecipeIngredientsInput `json:"ingredients"`
+	Steps       []string                  `json:"steps"`
 }

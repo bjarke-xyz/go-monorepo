@@ -21,6 +21,10 @@ type Config struct {
 	RedisPassword string
 	RedisPrefix   string
 
+	R2AccountId       string
+	R2AccessKeyId     string
+	R2AccessKeySecret string
+
 	JobKey string
 
 	AppEnv string
@@ -58,18 +62,21 @@ func NewConfig() (*Config, error) {
 		}
 	}
 	return &Config{
-		Port:          os.Getenv("PORT"),
-		DbHost:        os.Getenv("DB_HOST"),
-		DbPort:        os.Getenv("DB_PORT"),
-		DbName:        os.Getenv("DB_NAME"),
-		DbUser:        os.Getenv("DB_USER"),
-		DbPassword:    os.Getenv("DB_PASSWORD"),
-		RedisHost:     os.Getenv("REDIS_HOST"),
-		RedisPort:     os.Getenv("REDIS_PORT"),
-		RedisUser:     os.Getenv("REDIS_USER"),
-		RedisPassword: os.Getenv("REDIS_PASSWORD"),
-		RedisPrefix:   os.Getenv("REDIS_PREFIX"),
-		JobKey:        os.Getenv("JOB_KEY"),
-		AppEnv:        os.Getenv("APP_ENV"),
+		Port:              os.Getenv("PORT"),
+		DbHost:            os.Getenv("DB_HOST"),
+		DbPort:            os.Getenv("DB_PORT"),
+		DbName:            os.Getenv("DB_NAME"),
+		DbUser:            os.Getenv("DB_USER"),
+		DbPassword:        os.Getenv("DB_PASSWORD"),
+		RedisHost:         os.Getenv("REDIS_HOST"),
+		RedisPort:         os.Getenv("REDIS_PORT"),
+		RedisUser:         os.Getenv("REDIS_USER"),
+		RedisPassword:     os.Getenv("REDIS_PASSWORD"),
+		RedisPrefix:       os.Getenv("REDIS_PREFIX"),
+		R2AccountId:       os.Getenv("R2_ACCOUNTID"),
+		R2AccessKeyId:     os.Getenv("R2_ACCESSKEYID"),
+		R2AccessKeySecret: os.Getenv("R2_ACCESSKEYSECRET"),
+		JobKey:            os.Getenv("JOB_KEY"),
+		AppEnv:            os.Getenv("APP_ENV"),
 	}, nil
 }

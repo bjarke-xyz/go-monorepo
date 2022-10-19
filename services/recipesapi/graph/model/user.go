@@ -16,10 +16,12 @@ type UserRepository struct {
 }
 
 func NewUserRepository(cfg *config.Config) *UserRepository {
-	return &UserRepository{
+	repository := &UserRepository{
 		cfg:   cfg,
 		users: make([]*User, 0),
 	}
+	repository.CreateUser("test")
+	return repository
 }
 
 func (u *UserRepository) GetUsers() ([]*User, error) {
@@ -27,6 +29,7 @@ func (u *UserRepository) GetUsers() ([]*User, error) {
 }
 
 func (u *UserRepository) GetUser(id string) (*User, error) {
+	return u.users[0], nil
 	for _, user := range u.users {
 		if user.ID == id {
 			return user, nil
