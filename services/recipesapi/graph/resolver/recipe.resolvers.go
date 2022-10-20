@@ -16,7 +16,7 @@ import (
 
 // CreateRecipe is the resolver for the createRecipe field.
 func (r *mutationResolver) CreateRecipe(ctx context.Context, input model.RecipeInput) (*model.Recipe, error) {
-	user, ok := util.GinContextUser(ctx)
+	userId, ok := util.GinContextUserId(ctx)
 	if !ok {
 		return nil, fmt.Errorf("failed to get user")
 	}
@@ -28,7 +28,7 @@ func (r *mutationResolver) CreateRecipe(ctx context.Context, input model.RecipeI
 		return nil, fmt.Errorf("recipe with title '%v' already exists", existingRecipe.Title)
 	}
 	recipeId := uuid.NewString()
-	newRecipe := model.MapRecipeInput(recipeId, input, user)
+	newRecipe := model.MapRecipeInput(recipeId, input, userId)
 
 	if input.Image != nil {
 		imageId, err := r.fileService.SaveImage(ctx, recipeId, input.Image)
@@ -47,7 +47,7 @@ func (r *mutationResolver) CreateRecipe(ctx context.Context, input model.RecipeI
 
 // UpdateRecipe is the resolver for the updateRecipe field.
 func (r *mutationResolver) UpdateRecipe(ctx context.Context, id string, input model.RecipeInput) (*model.Recipe, error) {
-	user, ok := util.GinContextUser(ctx)
+	userId, ok := util.GinContextUserId(ctx)
 	if !ok {
 		return nil, fmt.Errorf("failed to get user")
 	}
@@ -55,7 +55,7 @@ func (r *mutationResolver) UpdateRecipe(ctx context.Context, id string, input mo
 	if err != nil {
 		return nil, fmt.Errorf("failed to get existing recipe: %w", err)
 	}
-	newRecipe := model.MapRecipeInput(id, input, user)
+	newRecipe := model.MapRecipeInput(id, input, userId)
 	if input.Image != nil {
 		imageId, err := r.fileService.SaveImage(ctx, id, input.Image)
 		if err != nil {
@@ -123,9 +123,9 @@ func (r *recipeResolver) Image(ctx context.Context, obj *model.Recipe) (*model.I
 
 // User is the resolver for the user field.
 func (r *recipeResolver) User(ctx context.Context, obj *model.Recipe) (*model.User, error) {
-	user, err := r.userRepository.GetUser(obj.UserID)
+	user, err := r.userRepository.GetUserById(ctx, obj.UserID)
 	if err != nil {
-		return nil, fmt.Errorf("error with id '%v' not found: %w", obj.UserID, err)
+		return nil, fmt.Errorf("user with id '%v' not found: %w", obj.UserID, err)
 	}
 	return user, nil
 }

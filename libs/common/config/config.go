@@ -26,6 +26,7 @@ type Config struct {
 	R2AccessKeySecret string
 
 	GoogleApplicationCredentials string
+	FirebaseWebApiKey            string
 
 	JobKey string
 
@@ -79,6 +80,7 @@ func NewConfig() (*Config, error) {
 		R2AccessKeyId:                os.Getenv("R2_ACCESSKEYID"),
 		R2AccessKeySecret:            os.Getenv("R2_ACCESSKEYSECRET"),
 		GoogleApplicationCredentials: os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"),
+		FirebaseWebApiKey:            os.Getenv("FIREBASE_WEB_API_KEY"),
 		JobKey:                       os.Getenv("JOB_KEY"),
 		AppEnv:                       os.Getenv("APP_ENV"),
 	}, nil

@@ -46,12 +46,12 @@ type RecipeRepository interface {
 	SaveRecipe(ctx context.Context, recipe *Recipe) (*Recipe, error)
 }
 
-func MapRecipeInput(id string, input RecipeInput, user *User) *Recipe {
+func MapRecipeInput(id string, input RecipeInput, userId string) *Recipe {
 	newRecipe := &Recipe{
 		ID:          id,
 		Title:       input.Title,
 		Description: input.Description,
-		UserID:      user.ID,
+		UserID:      userId,
 		Published:   input.Published,
 		Tips:        input.Tips,
 		Yield:       input.Yield,

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/bjarke-xyz/go-monorepo/services/recipesapi/graph/model"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,21 +26,21 @@ func GinContextFromContext(ctx context.Context) (*gin.Context, error) {
 	return gc, nil
 }
 
-func GinContextUser(ctx context.Context) (*model.User, bool) {
+func GinContextUserId(ctx context.Context) (string, bool) {
 	gc, err := GinContextFromContext(ctx)
 	if err != nil {
-		return nil, false
+		return "", false
 	}
-	userAny, ok := gc.Get("user")
+	userAny, ok := gc.Get("userid")
 	if !ok {
-		return nil, false
+		return "", false
 	}
 
-	user, ok := userAny.(*model.User)
+	userId, ok := userAny.(string)
 	if !ok {
-		return nil, false
+		return "", false
 	}
-	return user, true
+	return userId, true
 }
 
 func GinContextToContextMiddleware() gin.HandlerFunc {

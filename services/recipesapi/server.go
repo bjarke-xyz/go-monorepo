@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"strings"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/bjarke-xyz/go-monorepo/libs/common"
@@ -48,7 +51,20 @@ func main() {
 }
 
 func graphqlHandler(userRepository *model.UserRepository, recipeRepository model.RecipeRepository, storage *storage.StorageClient, fileService *file.FileService) gin.HandlerFunc {
-	h := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver.NewResolver(userRepository, recipeRepository, storage, fileService)}))
+	c := generated.Config{Resolvers: resolver.NewResolver(userRepository, recipeRepository, storage, fileService)}
+	c.Directives.HasRole = func(ctx context.Context, obj interface{}, next graphql.Resolver, role model.Role) (res interface{}, err error) {
+		if role == model.RoleAnon {
+			return next(ctx)
+		}
+
+		_, ok := util.GinContextUserId(ctx)
+		if !ok {
+			return nil, fmt.Errorf("requires login")
+		}
+		// TODO: admin check without getting user each time
+		return next(ctx)
+	}
+	h := handler.NewDefaultServer(generated.NewExecutableSchema(c))
 	return func(ctx *gin.Context) {
 		h.ServeHTTP(ctx.Writer, ctx.Request)
 	}
@@ -93,9 +109,27 @@ func imageHandler(storage *storage.StorageClient, fileService *file.FileService)
 
 func authMiddleware(cfg *config.Config, userRepository *model.UserRepository) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		if ctx.GetHeader("Authorization") == cfg.JobKey {
-			user, _ := userRepository.GetUser("")
-			ctx.Set("user", user)
+		authHeader := ctx.GetHeader("Authorization")
+		if strings.HasPrefix(strings.ToLower(authHeader), "bearer ") {
+			authHeaderParts := strings.Split(strings.ToLower(authHeader), "bearer ")
+			if len(authHeaderParts) >= 2 {
+				authHeader = authHeaderParts[1]
+			}
+		}
+		if authHeader != "" {
+			userId, err := userRepository.GetUserIdFromToken(ctx.Request.Context(), authHeader)
+			if err != nil {
+				log.Printf("failed to get user id: %v", err)
+				ctx.AbortWithStatusJSON(400, gin.H{
+					"errors": []gin.H{{
+						"message": "failed to get user id",
+						"path":    []string{},
+					}},
+					"data": nil,
+				})
+				return
+			}
+			ctx.Set("userid", userId)
 		}
 		ctx.Next()
 	}
