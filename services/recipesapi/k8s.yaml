@@ -35,7 +35,7 @@ spec:
               mountPath: /.env
               subPath: .env
             - name: serviceaccount
-              mountPath: /serviceaccunt.json
+              mountPath: /serviceaccount.json
               subPath: serviceaccount.json
           env:
             - name: PORT
