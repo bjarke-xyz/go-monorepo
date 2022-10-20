@@ -119,9 +119,9 @@ func authMiddleware(cfg *config.Config, userRepository *model.UserRepository) gi
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader("Authorization")
 		if strings.HasPrefix(strings.ToLower(authHeader), "bearer ") {
-			authHeaderParts := strings.Split(strings.ToLower(authHeader), "bearer ")
+			authHeaderParts := strings.Split(authHeader, " ")
 			if len(authHeaderParts) >= 2 {
-				authHeader = authHeaderParts[1]
+				authHeader = strings.TrimSpace(authHeaderParts[1])
 			}
 		}
 		if authHeader != "" {
