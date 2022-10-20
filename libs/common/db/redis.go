@@ -57,3 +57,13 @@ func (r *RedisCache) Get(ctx context.Context, key string, value any) error {
 	}
 	return err
 }
+
+func (r *RedisCache) Delete(ctx context.Context, key string) error {
+	err := r.cache.Delete(ctx, r.getKey(key))
+	if err != nil {
+		if !errors.Is(err, cache.ErrCacheMiss) {
+			log.Printf("cache delete with key %v failed: %v", key, err)
+		}
+	}
+	return err
+}

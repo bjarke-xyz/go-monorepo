@@ -9,6 +9,15 @@ import (
 	"github.com/bjarke-xyz/go-monorepo/services/recipesapi/graph/model"
 )
 
+const cacheKeyGetRecipes = "GetRecipes"
+
+func cacheKeyGetRecipe(id string) string {
+	return fmt.Sprintf("GetRecipe:%v", id)
+}
+func cacheKeyGetRecipeTitle(title string) string {
+	return fmt.Sprintf("GetRecipeByTitle:%v", title)
+}
+
 type RecipeService struct {
 	recipeRepository model.RecipeRepository
 	cache            *db.RedisCache
@@ -22,21 +31,20 @@ func NewRecipeService(recipeRepository model.RecipeRepository, cache *db.RedisCa
 }
 
 func (r *RecipeService) GetRecipes(ctx context.Context) ([]*model.Recipe, error) {
-	cacheKey := "GetRecipes"
 	var recipes []*model.Recipe
-	if err := r.cache.Get(ctx, cacheKey, &recipes); err == nil {
+	if err := r.cache.Get(ctx, cacheKeyGetRecipes, &recipes); err == nil {
 		return recipes, nil
 	}
 	recipes, err := r.recipeRepository.GetRecipes(ctx)
 	if err != nil {
 		return nil, err
 	}
-	r.cache.Set(ctx, cacheKey, recipes, time.Hour)
+	r.cache.Set(ctx, cacheKeyGetRecipes, recipes, time.Hour)
 	return recipes, nil
 }
 
 func (r *RecipeService) GetRecipeByTitle(ctx context.Context, title string) (*model.Recipe, error) {
-	cacheKey := fmt.Sprintf("GetRecipeByTitle:%v", title)
+	cacheKey := cacheKeyGetRecipeTitle(title)
 	var recipe *model.Recipe
 	if err := r.cache.Get(ctx, cacheKey, &recipe); err == nil {
 		return recipe, nil
@@ -50,7 +58,7 @@ func (r *RecipeService) GetRecipeByTitle(ctx context.Context, title string) (*mo
 }
 
 func (r *RecipeService) GetRecipe(ctx context.Context, id string) (*model.Recipe, error) {
-	cacheKey := fmt.Sprintf("GetRecipe:%v", id)
+	cacheKey := cacheKeyGetRecipe(id)
 	var recipe *model.Recipe
 	if err := r.cache.Get(ctx, cacheKey, &recipe); err == nil {
 		return recipe, nil
@@ -64,5 +72,11 @@ func (r *RecipeService) GetRecipe(ctx context.Context, id string) (*model.Recipe
 }
 
 func (r *RecipeService) SaveRecipe(ctx context.Context, recipe *model.Recipe) (*model.Recipe, error) {
-	return r.recipeRepository.SaveRecipe(ctx, recipe)
+	rec, err := r.recipeRepository.SaveRecipe(ctx, recipe)
+	if err == nil {
+		r.cache.Delete(ctx, cacheKeyGetRecipes)
+		r.cache.Delete(ctx, cacheKeyGetRecipe(rec.ID))
+		r.cache.Delete(ctx, cacheKeyGetRecipe(rec.Title))
+	}
+	return rec, err
 }
