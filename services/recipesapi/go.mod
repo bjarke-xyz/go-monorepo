@@ -9,6 +9,7 @@ require (
 	firebase.google.com/go/v4 v4.9.0
 	github.com/99designs/gqlgen v0.17.20
 	github.com/gin-gonic/gin v1.8.1
+	github.com/goccy/go-json v0.9.7
 	github.com/vektah/gqlparser/v2 v2.5.1
 	google.golang.org/api v0.96.0
 	google.golang.org/grpc v1.48.0
@@ -46,7 +47,6 @@ require (
 	github.com/go-playground/validator/v10 v10.10.0 // indirect
 	github.com/go-redis/cache/v8 v8.4.3 // indirect
 	github.com/go-redis/redis/v8 v8.11.5 // indirect
-	github.com/goccy/go-json v0.9.7 // indirect
 	github.com/golang-migrate/migrate/v4 v4.15.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
