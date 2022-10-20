@@ -32,22 +32,23 @@ func main() {
 	}
 
 	userRepository := model.NewUserRepository(cfg)
-	recipeRepository := model.NewRecipeRepository(cfg)
+	recipeRepository := model.NewNoSqlRecipeRepository(cfg)
 	storageClient := storage.NewStorageClient(cfg)
 	fileRepository := file.NewFileRepository(cfg)
+	fileService := file.NewFileService(fileRepository, storageClient)
 
 	r := common.GinRouter(cfg)
 	r.Use(util.GinContextToContextMiddleware())
 	query := r.Group("/query", authMiddleware(cfg, userRepository))
-	query.POST("", graphqlHandler(userRepository, recipeRepository, storageClient, fileRepository))
+	query.POST("", graphqlHandler(userRepository, recipeRepository, storageClient, fileService))
 	r.GET("/", playgroundHandler())
-	r.GET("/image/:id", imageHandler(storageClient, fileRepository))
+	r.GET("/image/:id", imageHandler(storageClient, fileService))
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", cfg.Port)
 	r.Run()
 }
 
-func graphqlHandler(userRepository *model.UserRepository, recipeRepository *model.RecipeRepository, storage *storage.StorageClient, fileRepository *file.FileRepository) gin.HandlerFunc {
-	h := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver.NewResolver(userRepository, recipeRepository, storage, fileRepository)}))
+func graphqlHandler(userRepository *model.UserRepository, recipeRepository model.RecipeRepository, storage *storage.StorageClient, fileService *file.FileService) gin.HandlerFunc {
+	h := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver.NewResolver(userRepository, recipeRepository, storage, fileService)}))
 	return func(ctx *gin.Context) {
 		h.ServeHTTP(ctx.Writer, ctx.Request)
 	}
@@ -59,7 +60,7 @@ func playgroundHandler() gin.HandlerFunc {
 	}
 }
 
-func imageHandler(storage *storage.StorageClient, fileRepository *file.FileRepository) gin.HandlerFunc {
+func imageHandler(storage *storage.StorageClient, fileService *file.FileService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		imageId := ctx.Param("id")
 		if imageId == "" {
@@ -71,7 +72,7 @@ func imageHandler(storage *storage.StorageClient, fileRepository *file.FileRepos
 			ctx.AbortWithError(400, err)
 			return
 		}
-		imageDto, err := fileRepository.GetFileById(imageUuid)
+		imageDto, err := fileService.GetFileById(ctx.Request.Context(), imageUuid)
 		if err != nil {
 			ctx.AbortWithError(500, fmt.Errorf("failed to get image info: %w", err))
 			return
@@ -80,7 +81,7 @@ func imageHandler(storage *storage.StorageClient, fileRepository *file.FileRepos
 			ctx.AbortWithError(404, fmt.Errorf("image not found"))
 			return
 		}
-		bytes, err := storage.Get(imageDto.Bucket, imageDto.Key)
+		bytes, err := storage.Get(ctx.Request.Context(), imageDto.Bucket, imageDto.Key)
 		if err != nil {
 			ctx.AbortWithError(500, fmt.Errorf("failed to get image: %w", err))
 			return

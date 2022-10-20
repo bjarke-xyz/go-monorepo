@@ -3,7 +3,8 @@ scalar Upload
 
 extend type Query {
   recipes: [Recipe!]!
-  getRecipe(id: ID!): Recipe
+  recipe(id: ID!): Recipe
+  recipeByTitle(title: String!): Recipe
 }
 
 extend type Mutation {

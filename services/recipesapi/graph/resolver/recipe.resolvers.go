@@ -6,10 +6,8 @@ package resolver
 import (
 	"context"
 	"fmt"
-	"io"
 	"time"
 
-	"github.com/bjarke-xyz/go-monorepo/services/recipesapi/file"
 	"github.com/bjarke-xyz/go-monorepo/services/recipesapi/graph/generated"
 	"github.com/bjarke-xyz/go-monorepo/services/recipesapi/graph/model"
 	"github.com/bjarke-xyz/go-monorepo/services/recipesapi/util"
@@ -22,7 +20,7 @@ func (r *mutationResolver) CreateRecipe(ctx context.Context, input model.RecipeI
 	if !ok {
 		return nil, fmt.Errorf("failed to get user")
 	}
-	existingRecipe, err := r.recipeRepository.GetRecipeByTitle(input.Title)
+	existingRecipe, err := r.recipeRepository.GetRecipeByTitle(ctx, input.Title)
 	if err != nil {
 		return nil, fmt.Errorf("error validating recipe title: %w", err)
 	}
@@ -33,35 +31,14 @@ func (r *mutationResolver) CreateRecipe(ctx context.Context, input model.RecipeI
 	newRecipe := model.MapRecipeInput(recipeId, input, user)
 
 	if input.Image != nil {
-		if input.Image.Size > 5242880 {
-			return nil, fmt.Errorf("image must be less than 5 megabytes")
-		}
-		imageData, err := io.ReadAll(input.Image.File)
+		imageId, err := r.fileService.SaveImage(ctx, recipeId, input.Image)
 		if err != nil {
-			return nil, fmt.Errorf("could not read image file: %w", err)
-		}
-		imageId := uuid.New()
-		key := fmt.Sprintf("/images/%v/%v", recipeId, imageId.String())
-		err = r.storage.Put("recipesapi", key, imageData)
-		if err != nil {
-			return nil, fmt.Errorf("failed to store image: %w", err)
-		}
-		fileDto := &file.FileDto{
-			ID:          imageId,
-			Bucket:      "recipesapi",
-			Key:         key,
-			ContentType: input.Image.ContentType,
-			Size:        input.Image.Size,
-			Name:        input.Image.Filename,
-		}
-		err = r.fileRepository.SaveFile(fileDto)
-		if err != nil {
-			return nil, fmt.Errorf("failed to save image info: %w", err)
+			return nil, err
 		}
 		newRecipe.ImageID = &imageId
 	}
 
-	createdRecipe, err := r.recipeRepository.SaveRecipe(newRecipe)
+	createdRecipe, err := r.recipeRepository.SaveRecipe(ctx, newRecipe)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save recipe: %w", err)
 	}
@@ -74,9 +51,23 @@ func (r *mutationResolver) UpdateRecipe(ctx context.Context, id string, input mo
 	if !ok {
 		return nil, fmt.Errorf("failed to get user")
 	}
-	// TODO: handle image argument
+	existingRecipe, err := r.recipeRepository.GetRecipe(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get existing recipe: %w", err)
+	}
 	newRecipe := model.MapRecipeInput(id, input, user)
-	createdRecipe, err := r.recipeRepository.SaveRecipe(newRecipe)
+	if input.Image != nil {
+		imageId, err := r.fileService.SaveImage(ctx, id, input.Image)
+		if err != nil {
+			return nil, err
+		}
+		newRecipe.ImageID = &imageId
+	} else if existingRecipe.ImageID != nil && input.Image == nil {
+		newRecipe.ImageID = existingRecipe.ImageID
+	}
+	newRecipe.CreatedAt = existingRecipe.CreatedAt
+	newRecipe.LastModifiedAt = time.Now()
+	createdRecipe, err := r.recipeRepository.SaveRecipe(ctx, newRecipe)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save recipe: %w", err)
 	}
@@ -85,18 +76,27 @@ func (r *mutationResolver) UpdateRecipe(ctx context.Context, id string, input mo
 
 // Recipes is the resolver for the recipes field.
 func (r *queryResolver) Recipes(ctx context.Context) ([]*model.Recipe, error) {
-	recipes, err := r.recipeRepository.GetRecipes()
+	recipes, err := r.recipeRepository.GetRecipes(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get recipes: %w", err)
 	}
 	return recipes, nil
 }
 
-// GetRecipe is the resolver for the getRecipe field.
-func (r *queryResolver) GetRecipe(ctx context.Context, id string) (*model.Recipe, error) {
-	recipe, err := r.recipeRepository.GetRecipe(id)
+// Recipe is the resolver for the recipe field.
+func (r *queryResolver) Recipe(ctx context.Context, id string) (*model.Recipe, error) {
+	recipe, err := r.recipeRepository.GetRecipe(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get recipe with id %v: %w", id, err)
+	}
+	return recipe, nil
+}
+
+// RecipeByTitle is the resolver for the recipeByTitle field.
+func (r *queryResolver) RecipeByTitle(ctx context.Context, title string) (*model.Recipe, error) {
+	recipe, err := r.recipeRepository.GetRecipeByTitle(ctx, title)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get recipe with title %v: %w", title, err)
 	}
 	return recipe, nil
 }
@@ -106,7 +106,7 @@ func (r *recipeResolver) Image(ctx context.Context, obj *model.Recipe) (*model.I
 	if obj.ImageID == nil {
 		return nil, nil
 	}
-	fileDto, err := r.fileRepository.GetFileById(*obj.ImageID)
+	fileDto, err := r.fileService.GetFileById(ctx, *obj.ImageID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get image info: %w", err)
 	}

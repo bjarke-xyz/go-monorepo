@@ -11,17 +11,17 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	recipeRepository *model.RecipeRepository
+	recipeRepository model.RecipeRepository
 	userRepository   *model.UserRepository
 	storage          *storage.StorageClient
-	fileRepository   *file.FileRepository
+	fileService      *file.FileService
 }
 
-func NewResolver(userRepository *model.UserRepository, recipeRepository *model.RecipeRepository, storage *storage.StorageClient, fileRepository *file.FileRepository) *Resolver {
+func NewResolver(userRepository *model.UserRepository, recipeRepository model.RecipeRepository, storage *storage.StorageClient, fileService *file.FileService) *Resolver {
 	return &Resolver{
 		recipeRepository: recipeRepository,
 		userRepository:   userRepository,
 		storage:          storage,
-		fileRepository:   fileRepository,
+		fileService:      fileService,
 	}
 }

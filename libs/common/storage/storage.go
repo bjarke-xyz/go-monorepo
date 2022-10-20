@@ -46,8 +46,8 @@ func (s *StorageClient) newClient(ctx context.Context) (*s3.Client, error) {
 	return client, nil
 }
 
-func (s *StorageClient) Put(bucket string, key string, data []byte) error {
-	client, err := s.newClient(context.TODO())
+func (s *StorageClient) Put(ctx context.Context, bucket string, key string, data []byte) error {
+	client, err := s.newClient(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting client: %w", err)
 	}
@@ -63,8 +63,8 @@ func (s *StorageClient) Put(bucket string, key string, data []byte) error {
 	return nil
 }
 
-func (s *StorageClient) Get(bucket string, key string) ([]byte, error) {
-	client, err := s.newClient(context.TODO())
+func (s *StorageClient) Get(ctx context.Context, bucket string, key string) ([]byte, error) {
+	client, err := s.newClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error getting client: %w", err)
 	}

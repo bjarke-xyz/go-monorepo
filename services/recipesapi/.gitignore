@@ -3,3 +3,4 @@ cache/*
 pgdata
 .env
 !.env.example
+*serviceaccount.json

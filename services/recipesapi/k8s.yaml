@@ -23,6 +23,9 @@ spec:
         - name: env
           configMap:
             name: env
+        - name: serviceaccount
+          configMap:
+            name: serviceaccount
       containers:
         - name: recipesapi
           image: registry.bjarke.xyz/recipesapi
@@ -31,6 +34,9 @@ spec:
             - name: env
               mountPath: /.env
               subPath: .env
+            - name: serviceaccount
+              mountPath: /serviceaccunt.json
+              subPath: serviceaccount.json
           env:
             - name: PORT
               value: "80"
