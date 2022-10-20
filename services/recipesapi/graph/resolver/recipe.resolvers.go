@@ -20,7 +20,7 @@ func (r *mutationResolver) CreateRecipe(ctx context.Context, input model.RecipeI
 	if !ok {
 		return nil, fmt.Errorf("failed to get user")
 	}
-	existingRecipe, err := r.recipeRepository.GetRecipeByTitle(ctx, input.Title)
+	existingRecipe, err := r.recipeService.GetRecipeByTitle(ctx, input.Title)
 	if err != nil {
 		return nil, fmt.Errorf("error validating recipe title: %w", err)
 	}
@@ -38,7 +38,7 @@ func (r *mutationResolver) CreateRecipe(ctx context.Context, input model.RecipeI
 		newRecipe.ImageID = &imageId
 	}
 
-	createdRecipe, err := r.recipeRepository.SaveRecipe(ctx, newRecipe)
+	createdRecipe, err := r.recipeService.SaveRecipe(ctx, newRecipe)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save recipe: %w", err)
 	}
@@ -51,7 +51,7 @@ func (r *mutationResolver) UpdateRecipe(ctx context.Context, id string, input mo
 	if !ok {
 		return nil, fmt.Errorf("failed to get user")
 	}
-	existingRecipe, err := r.recipeRepository.GetRecipe(ctx, id)
+	existingRecipe, err := r.recipeService.GetRecipe(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get existing recipe: %w", err)
 	}
@@ -67,7 +67,7 @@ func (r *mutationResolver) UpdateRecipe(ctx context.Context, id string, input mo
 	}
 	newRecipe.CreatedAt = existingRecipe.CreatedAt
 	newRecipe.LastModifiedAt = time.Now()
-	createdRecipe, err := r.recipeRepository.SaveRecipe(ctx, newRecipe)
+	createdRecipe, err := r.recipeService.SaveRecipe(ctx, newRecipe)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save recipe: %w", err)
 	}
@@ -76,7 +76,7 @@ func (r *mutationResolver) UpdateRecipe(ctx context.Context, id string, input mo
 
 // Recipes is the resolver for the recipes field.
 func (r *queryResolver) Recipes(ctx context.Context) ([]*model.Recipe, error) {
-	recipes, err := r.recipeRepository.GetRecipes(ctx)
+	recipes, err := r.recipeService.GetRecipes(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get recipes: %w", err)
 	}
@@ -85,7 +85,7 @@ func (r *queryResolver) Recipes(ctx context.Context) ([]*model.Recipe, error) {
 
 // Recipe is the resolver for the recipe field.
 func (r *queryResolver) Recipe(ctx context.Context, id string) (*model.Recipe, error) {
-	recipe, err := r.recipeRepository.GetRecipe(ctx, id)
+	recipe, err := r.recipeService.GetRecipe(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get recipe with id %v: %w", id, err)
 	}
@@ -94,7 +94,7 @@ func (r *queryResolver) Recipe(ctx context.Context, id string) (*model.Recipe, e
 
 // RecipeByTitle is the resolver for the recipeByTitle field.
 func (r *queryResolver) RecipeByTitle(ctx context.Context, title string) (*model.Recipe, error) {
-	recipe, err := r.recipeRepository.GetRecipeByTitle(ctx, title)
+	recipe, err := r.recipeService.GetRecipeByTitle(ctx, title)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get recipe with title %v: %w", title, err)
 	}
@@ -123,7 +123,7 @@ func (r *recipeResolver) Image(ctx context.Context, obj *model.Recipe) (*model.I
 
 // User is the resolver for the user field.
 func (r *recipeResolver) User(ctx context.Context, obj *model.Recipe) (*model.User, error) {
-	user, err := r.userRepository.GetUserById(ctx, obj.UserID)
+	user, err := r.userService.GetUserById(ctx, obj.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("user with id '%v' not found: %w", obj.UserID, err)
 	}

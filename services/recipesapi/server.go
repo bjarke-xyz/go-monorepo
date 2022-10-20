@@ -17,6 +17,8 @@ import (
 	"github.com/bjarke-xyz/go-monorepo/services/recipesapi/graph/generated"
 	"github.com/bjarke-xyz/go-monorepo/services/recipesapi/graph/model"
 	"github.com/bjarke-xyz/go-monorepo/services/recipesapi/graph/resolver"
+	"github.com/bjarke-xyz/go-monorepo/services/recipesapi/recipes"
+	"github.com/bjarke-xyz/go-monorepo/services/recipesapi/users.go"
 	"github.com/bjarke-xyz/go-monorepo/services/recipesapi/util"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -34,8 +36,14 @@ func main() {
 		log.Printf("failed to migrate: %v", err)
 	}
 
+	cache := db.NewRedisCache(cfg)
+
 	userRepository := model.NewUserRepository(cfg)
+	userService := users.NewUserService(userRepository, cache)
+
 	recipeRepository := model.NewNoSqlRecipeRepository(cfg)
+	recipeService := recipes.NewRecipeService(recipeRepository, cache)
+
 	storageClient := storage.NewStorageClient(cfg)
 	fileRepository := file.NewFileRepository(cfg)
 	fileService := file.NewFileService(fileRepository, storageClient)
@@ -43,15 +51,15 @@ func main() {
 	r := common.GinRouter(cfg)
 	r.Use(util.GinContextToContextMiddleware())
 	query := r.Group("/query", authMiddleware(cfg, userRepository))
-	query.POST("", graphqlHandler(userRepository, recipeRepository, storageClient, fileService))
+	query.POST("", graphqlHandler(userService, recipeService, storageClient, fileService))
 	r.GET("/", playgroundHandler())
 	r.GET("/image/:id", imageHandler(storageClient, fileService))
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", cfg.Port)
 	r.Run()
 }
 
-func graphqlHandler(userRepository *model.UserRepository, recipeRepository model.RecipeRepository, storage *storage.StorageClient, fileService *file.FileService) gin.HandlerFunc {
-	c := generated.Config{Resolvers: resolver.NewResolver(userRepository, recipeRepository, storage, fileService)}
+func graphqlHandler(userService *users.UserService, recipeService *recipes.RecipeService, storage *storage.StorageClient, fileService *file.FileService) gin.HandlerFunc {
+	c := generated.Config{Resolvers: resolver.NewResolver(userService, recipeService, storage, fileService)}
 	c.Directives.HasRole = func(ctx context.Context, obj interface{}, next graphql.Resolver, role model.Role) (res interface{}, err error) {
 		if role == model.RoleAnon {
 			return next(ctx)

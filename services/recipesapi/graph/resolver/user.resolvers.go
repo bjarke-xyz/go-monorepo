@@ -13,7 +13,7 @@ import (
 
 // SignIn is the resolver for the signIn field.
 func (r *mutationResolver) SignIn(ctx context.Context, email string, password string) (*model.Token, error) {
-	signInResp, err := r.userRepository.SignIn(ctx, email, password)
+	signInResp, err := r.userService.SignIn(ctx, email, password)
 	if err != nil {
 		return nil, fmt.Errorf("could not sign in: %w", err)
 	}
@@ -27,7 +27,7 @@ func (r *mutationResolver) SignIn(ctx context.Context, email string, password st
 
 // SignUp is the resolver for the signUp field.
 func (r *mutationResolver) SignUp(ctx context.Context, email string, password string) (*model.Token, error) {
-	signInResp, err := r.userRepository.SignUp(ctx, email, password)
+	signInResp, err := r.userService.SignUp(ctx, email, password)
 	if err != nil {
 		return nil, fmt.Errorf("could not sign up: %w", err)
 	}
@@ -45,7 +45,7 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	if !ok {
 		return nil, fmt.Errorf("requires login")
 	}
-	user, err := r.userRepository.GetUserById(ctx, userId)
+	user, err := r.userService.GetUserById(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
