@@ -76,9 +76,61 @@ func (u *UserRepository) GetUserById(ctx context.Context, userId string) (*User,
 		}
 	}
 	return &User{
-		ID:    user.UID,
-		Name:  user.DisplayName,
-		Email: user.Email,
+		ID:            user.UID,
+		DisplayName:   user.DisplayName,
+		Email:         user.Email,
+		EmailVerified: user.EmailVerified,
+	}, nil
+}
+
+func (u *UserRepository) SignUp(ctx context.Context, email string, password string, displayName string) (*UserWithToken, error) {
+	client, err := u.getClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+	params := (&auth.UserToCreate{}).
+		Email(email).
+		EmailVerified(false).
+		Password(password).
+		DisplayName(displayName).
+		Disabled(false)
+	user, err := client.CreateUser(ctx, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create user: %w", err)
+	}
+	signInResp, err := u.SignIn(ctx, email, password)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get token: %w", err)
+	}
+	return &UserWithToken{
+		User: User{
+			ID:            user.UID,
+			DisplayName:   user.DisplayName,
+			Email:         user.Email,
+			EmailVerified: user.EmailVerified,
+		},
+		Token: signInResp.IdToken,
+	}, nil
+}
+
+func (u *UserRepository) UpdateUser(ctx context.Context, id string, email string, password *string, displayName string) (*User, error) {
+	client, err := u.getClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+	params := (&auth.UserToUpdate{}).Email(email).DisplayName(displayName)
+	if password != nil {
+		params = params.Password(*password)
+	}
+	user, err := client.UpdateUser(ctx, id, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update user: %w", err)
+	}
+	return &User{
+		ID:            user.UID,
+		Email:         user.Email,
+		EmailVerified: user.EmailVerified,
+		DisplayName:   user.DisplayName,
 	}, nil
 }
 
@@ -104,37 +156,6 @@ func (u *UserRepository) SignIn(ctx context.Context, email string, password stri
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 	req, err := http.NewRequest(http.MethodPost, "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key="+u.cfg.FirebaseWebApiKey, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return nil, fmt.Errorf("failed to make request: %w", err)
-	}
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to do request: %w", err)
-	}
-	defer resp.Body.Close()
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-	var signInResponse SignInResponse
-	err = json.Unmarshal(respBody, &signInResponse)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
-	}
-	return &signInResponse, nil
-}
-
-func (u *UserRepository) SignUp(ctx context.Context, email string, password string) (*SignInResponse, error) {
-	body := make(map[string]any)
-	body["email"] = email
-	body["password"] = password
-	body["returnSecureToken"] = true
-	jsonData, err := json.Marshal(body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
-	}
-	req, err := http.NewRequest(http.MethodPost, "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key="+u.cfg.FirebaseWebApiKey, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return nil, fmt.Errorf("failed to make request: %w", err)
 	}

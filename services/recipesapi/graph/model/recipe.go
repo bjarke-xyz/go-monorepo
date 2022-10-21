@@ -44,6 +44,7 @@ type RecipeRepository interface {
 	GetRecipe(ctx context.Context, id string) (*Recipe, error)
 	GetRecipeByTitle(ctx context.Context, title string) (*Recipe, error)
 	SaveRecipe(ctx context.Context, recipe *Recipe) (*Recipe, error)
+	GetRecipesByUserId(ctx context.Context, userId string) ([]*Recipe, error)
 }
 
 func MapRecipeInput(id string, input RecipeInput, userId string) *Recipe {

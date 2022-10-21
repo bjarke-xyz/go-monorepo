@@ -6,7 +6,8 @@ extend type Query {
 
 extend type Mutation {
   signIn(email: String!, password: String!): Token!
-  signUp(email: String!, password: String!): Token! 
+  signUp(input: UserInput!): Token! 
+  updateUser(input: UserInput!): User!
 }
 
 directive @hasRole(role: Role!) on FIELD_DEFINITION
@@ -18,10 +19,17 @@ enum Role {
 
 type User {
   id: ID!
-  name: String!
+  displayName: String!
   email: String!
+  recipes: [Recipe!]!
 }
 
 type Token {
   token: String!
+}
+
+input UserInput {
+  email: String!
+  password: String
+  displayName: String!
 }

@@ -17,6 +17,11 @@ type Image struct {
 	Name string `json:"name"`
 }
 
+type RecipeAuthor struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
 type RecipeIngredientsInput struct {
 	Original string   `json:"original"`
 	ID       *int     `json:"id"`
@@ -44,6 +49,12 @@ type RecipePartsInput struct {
 
 type Token struct {
 	Token string `json:"token"`
+}
+
+type UserInput struct {
+	Email       string  `json:"email"`
+	Password    *string `json:"password"`
+	DisplayName string  `json:"displayName"`
 }
 
 type Role string

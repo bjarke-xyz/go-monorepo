@@ -218,6 +218,32 @@ func (r *NoSqlRecipeRepository) GetRecipeByTitle(ctx context.Context, title stri
 	return recipe, nil
 }
 
+func (r *NoSqlRecipeRepository) GetRecipesByUserId(ctx context.Context, userId string) ([]*Recipe, error) {
+	client, err := r.getClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+	iter := client.Collection(recipeCollection).Where("userId", "==", userId).Documents(ctx)
+	recipes := make([]*Recipe, 0)
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to get recipes: %w", err)
+		}
+		var dto firebaseRecipeDto
+		err = doc.DataTo(&dto)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse doc: %w", err)
+		}
+		recipe := mapFirebaseRecipeDto(dto)
+		recipes = append(recipes, recipe)
+	}
+	return recipes, nil
+}
+
 func (r *NoSqlRecipeRepository) GetRecipe(ctx context.Context, id string) (*Recipe, error) {
 	client, err := r.getClient(ctx)
 	if err != nil {

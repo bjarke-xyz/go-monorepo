@@ -9,6 +9,10 @@ import (
 	"github.com/bjarke-xyz/go-monorepo/services/recipesapi/graph/model"
 )
 
+func cacheKeyGetUser(id string) string {
+	return fmt.Sprintf("GetUserById:%v", id)
+}
+
 type UserService struct {
 	userRepository *model.UserRepository
 	cache          *db.RedisCache
@@ -26,7 +30,7 @@ func (u *UserService) GetUserIdFromToken(ctx context.Context, idToken string) (s
 }
 
 func (u *UserService) GetUserById(ctx context.Context, userId string) (*model.User, error) {
-	cacheKey := fmt.Sprintf("GetUserById:%v", userId)
+	cacheKey := cacheKeyGetUser(userId)
 	var user *model.User
 	if err := u.cache.Get(ctx, cacheKey, &user); err == nil {
 		return user, nil
@@ -38,10 +42,18 @@ func (u *UserService) GetUserById(ctx context.Context, userId string) (*model.Us
 	u.cache.Set(ctx, cacheKey, user, time.Minute*5)
 	return user, nil
 }
+func (u *UserService) SignUp(ctx context.Context, email string, password string, displayName string) (*model.UserWithToken, error) {
+	return u.userRepository.SignUp(ctx, email, password, displayName)
+}
+func (u *UserService) UpdateUser(ctx context.Context, userId string, email string, password *string, displayName string) (*model.User, error) {
+	user, err := u.userRepository.UpdateUser(ctx, userId, email, password, displayName)
+	if err != nil {
+		return nil, err
+	}
+	u.cache.Delete(ctx, cacheKeyGetUser(userId))
+	return user, nil
+}
 
 func (u *UserService) SignIn(ctx context.Context, email string, password string) (*model.SignInResponse, error) {
 	return u.userRepository.SignIn(ctx, email, password)
-}
-func (u *UserService) SignUp(ctx context.Context, email string, password string) (*model.SignInResponse, error) {
-	return u.userRepository.SignUp(ctx, email, password)
 }

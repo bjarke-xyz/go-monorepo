@@ -17,6 +17,9 @@ func cacheKeyGetRecipe(id string) string {
 func cacheKeyGetRecipeTitle(title string) string {
 	return fmt.Sprintf("GetRecipeByTitle:%v", title)
 }
+func cacheKeyGetRecipeUserId(userId string) string {
+	return fmt.Sprintf("GetRecipeByUserId:%v", userId)
+}
 
 type RecipeService struct {
 	recipeRepository model.RecipeRepository
@@ -57,6 +60,21 @@ func (r *RecipeService) GetRecipeByTitle(ctx context.Context, title string) (*mo
 	return recipe, nil
 }
 
+func (r *RecipeService) GetRecipesByUserId(ctx context.Context, userId string) ([]*model.Recipe, error) {
+	var recipes []*model.Recipe
+	cacheKey := cacheKeyGetRecipeUserId(userId)
+	if err := r.cache.Get(ctx, cacheKey, &recipes); err == nil {
+		return recipes, nil
+	}
+	recipes, err := r.recipeRepository.GetRecipesByUserId(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	r.cache.Set(ctx, cacheKey, recipes, time.Hour)
+	return recipes, nil
+
+}
+
 func (r *RecipeService) GetRecipe(ctx context.Context, id string) (*model.Recipe, error) {
 	cacheKey := cacheKeyGetRecipe(id)
 	var recipe *model.Recipe
@@ -77,6 +95,7 @@ func (r *RecipeService) SaveRecipe(ctx context.Context, recipe *model.Recipe) (*
 		r.cache.Delete(ctx, cacheKeyGetRecipes)
 		r.cache.Delete(ctx, cacheKeyGetRecipe(rec.ID))
 		r.cache.Delete(ctx, cacheKeyGetRecipe(rec.Title))
+		r.cache.Delete(ctx, cacheKeyGetRecipeUserId(rec.UserID))
 	}
 	return rec, err
 }

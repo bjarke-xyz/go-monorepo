@@ -122,12 +122,15 @@ func (r *recipeResolver) Image(ctx context.Context, obj *model.Recipe) (*model.I
 }
 
 // User is the resolver for the user field.
-func (r *recipeResolver) User(ctx context.Context, obj *model.Recipe) (*model.User, error) {
+func (r *recipeResolver) User(ctx context.Context, obj *model.Recipe) (*model.RecipeAuthor, error) {
 	user, err := r.userService.GetUserById(ctx, obj.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("user with id '%v' not found: %w", obj.UserID, err)
 	}
-	return user, nil
+	return &model.RecipeAuthor{
+		ID:   user.ID,
+		Name: user.DisplayName,
+	}, nil
 }
 
 // CreatedDateTime is the resolver for the createdDateTime field.

@@ -37,7 +37,7 @@ type Recipe {
   title: String!
   description: String
   image: Image
-  user: User!
+  user: RecipeAuthor!
   createdDateTime: Time!
   moderatedDateTime:Time  
   lastModifiedDateTime: Time!
@@ -45,6 +45,10 @@ type Recipe {
   tips: [String!]!
   yield: String
   parts: [RecipeParts!]!
+}
+type RecipeAuthor {
+  id: ID!
+  name: String!
 }
 
 input RecipeIngredientsInput {
