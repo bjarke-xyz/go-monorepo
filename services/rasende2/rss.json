@@ -58,7 +58,6 @@
   {
     "name": "BILLED-BLADET",
     "urls": [
-      "https://www.billedbladet.dk/rss/mary.xml",
       "https://www.billedbladet.dk/rss/kendte.xml",
       "https://www.billedbladet.dk/rss/kongelige.xml"
     ]
