@@ -55,12 +55,5 @@
 
   { "name": "Arbejderen", "urls": ["https://arbejderen.dk/feed/"] },
 
-  {
-    "name": "BILLED-BLADET",
-    "urls": [
-      "https://www.billedbladet.dk/rss/kongelige.xml"
-    ]
-  },
-
   { "name": "Version2", "urls": ["https://www.version2.dk/rss"] }
 ]
